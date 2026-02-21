@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- Optimized for iPhone 13 / iOS screen sizes -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Pocket Looper</title>
+    
+    <!-- iOS PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Looper">
+    
+    <!-- App Icon (Base64 SVG) -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iIzEyMTIxMiIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iNTAiIHI9IjQwIiBzdHJva2U9IiNlNzRjM2MiIHN0cm9rZS13aWR0aD0iNSIgZmlsbD0ibm9uZSIvPjx0ZXh0IHg9IjUwIiB5PSI2MCIgZm9udC1zaXplPSIzMCIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjogPC90ZXh0Pjwvc3ZnPg==">
+    
+    <!-- Inline PWA Manifest -->
+    <link rel="manifest" href="data:application/manifest+json;base64,ewogICJuYW1lIjogIkd1aXRhciBMb29wZXIiLAogICJzaG9ydF9uYW1lIjogIkxvb3BlciIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiIzEyMTIxMiIsCiAgInRoZW1lX2NvbG9yIjogIiNlNzRjM2MiCn0=">
+
+    <style>
+        :root {
+            --bg: #121212;
+            --panel: #1e1e1e;
+            --text: #ffffff;
+            --accent-red: #e74c3c;
+            --accent-green: #2ecc71;
+            --gray: #95a5a6;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: env(safe-area-inset-top) 20px 20px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 90vh;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        h1 { 
+            font-size: 32px; 
+            margin-bottom: 20px; 
+            color: var(--accent-red); 
+            text-align: center;
+        }
+        
+        .panel {
+            width: 100%;
+            max-width: 400px;
+            background: var(--panel);
+            border-radius: 20px;
+            padding: 30px 25px;
+            box-sizing: border-box;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        button {
+            width: 100%;
+            padding: 22px;
+            font-size: 20px;
+            font-weight: 600;
+            border: none;
+            border-radius: 14px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        button:active { transform: scale(0.96); }
+        button:disabled { opacity: 0.4; pointer-events: none; }
+
+        .btn-record { background: var(--accent-red); color: white; }
+        .btn-play { background: var(--accent-green); color: white; }
+        .btn-clear { background: var(--gray); color: white; margin-bottom: 0; }
+        
+        .active-green { background: #27ae60; box-shadow: 0 0 15px var(--accent-green); }
+        .recording { 
+            animation: pulse 1s infinite alternate; 
+            background: #c0392b; 
+        }
+
+        .hint {
+            font-size: 14px;
+            color: #aaa;
+            text-align: center;
+            margin-bottom: 25px;
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 12px;
+            line-height: 1.4;
+        }
+
+        @keyframes pulse {
+            from { box-shadow: 0 0 5px var(--accent-red); }
+            to { box-shadow: 0 0 25px var(--accent-red); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="panel">
+        <h1>🎸 Pocket Looper</h1>
+        <div class="hint">🎧 <b>Note:</b> Use headphones so your phone's mic doesn't re-record the audio of your playback loop!</div>
+        
+        <button id="recordBtn" class="btn-record" onclick="toggleRecord()">🔴 Tap to Record</button>
+        <button id="playBtn" class="btn-play" onclick="toggleLoop()" disabled>▶️ Play Loop</button>
+        <button id="clearBtn" class="btn-clear" onclick="clearLoop()" disabled>🗑 Clear Loop</button>
+    </div>
+
+    <script>
+        // --- Core Audio Setup ---
+        let audioCtx;
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // --- Looper Logic ---
+        let mediaRecorder;
+        let audioChunks = [];
+        let loopBuffer = null;
+        let loopSource = null;
+        let isRecording = false;
+        let isLoopPlaying = false;
+
+        async function setupRecorder() {
+            try {
+                // Settings optimized for recording instruments
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: { 
+                        echoCancellation: false, 
+                        noiseSuppression: false, 
+                        autoGainControl: false 
+                    } 
+                });
+                mediaRecorder = new MediaRecorder(stream);
+                
+                mediaRecorder.ondataavailable = e => {
+                    if (e.data.size > 0) audioChunks.push(e.data);
+                };
+                
+                mediaRecorder.onstop = async () => {
+                    document.getElementById('recordBtn').innerText = '⏳ Processing...';
+                    const audioBlob = new Blob(audioChunks);
+                    audioChunks = [];
+                    
+                    try {
+                        const arrayBuffer = await audioBlob.arrayBuffer();
+                        // Callbacks used for maximum iOS Safari compatibility
+                        audioCtx.decodeAudioData(arrayBuffer, (buffer) => {
+                            loopBuffer = buffer;
+                            updateLooperUI();
+                        }, (err) => {
+                            console.error(err);
+                            alert("Failed to decode audio. Please try recording again.");
+                            updateLooperUI();
+                        });
+                    } catch (e) {
+                        alert("Processing error: " + e.message);
+                        updateLooperUI();
+                    }
+                };
+            } catch (err) {
+                alert("Microphone access is required to use the looper.");
+                console.error(err);
+            }
+        }
+
+        async function toggleRecord() {
+            initAudio();
+            
+            if (!mediaRecorder) {
+                await setupRecorder();
+                if (!mediaRecorder) return; // Permission denied
+            }
+
+            const btn = document.getElementById('recordBtn');
+
+            if (!isRecording) {
+                // Stop current loop if playing so it doesn't get recorded via external noise
+                if (isLoopPlaying) toggleLoop();
+                
+                audioChunks = [];
+                mediaRecorder.start();
+                isRecording = true;
+                btn.innerText = '⏹ Tap to Stop Rec';
+                btn.classList.add('recording');
+            } else {
+                mediaRecorder.stop();
+                isRecording = false;
+                btn.classList.remove('recording');
+            }
+        }
+
+        function toggleLoop() {
+            initAudio();
+            if (!loopBuffer) return;
+
+            const btn = document.getElementById('playBtn');
+
+            if (isLoopPlaying) {
+                if (loopSource) loopSource.stop();
+                isLoopPlaying = false;
+                btn.innerText = '▶️ Play Loop';
+                btn.classList.remove('active-green');
+            } else {
+                loopSource = audioCtx.createBufferSource();
+                loopSource.buffer = loopBuffer;
+                loopSource.loop = true;
+                loopSource.connect(audioCtx.destination);
+                loopSource.start();
+                isLoopPlaying = true;
+                btn.innerText = '⏸ Stop Loop';
+                btn.classList.add('active-green');
+            }
+        }
+
+        function clearLoop() {
+            if (isLoopPlaying) {
+                toggleLoop(); // Stops the playback first
+            }
+            loopBuffer = null;
+            updateLooperUI();
+        }
+
+        function updateLooperUI() {
+            const hasLoop = loopBuffer !== null;
+            document.getElementById('playBtn').disabled = !hasLoop;
+            document.getElementById('clearBtn').disabled = !hasLoop;
+            document.getElementById('recordBtn').innerText = hasLoop ? '🔴 Overwrite Loop' : '🔴 Tap to Record';
+            
+            if (!hasLoop) {
+                document.getElementById('playBtn').innerText = '▶️ Play Loop';
+                document.getElementById('playBtn').classList.remove('active-green');
+            }
+        }
+    </script>
+</body>
+</html>
