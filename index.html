@@ -6,15 +6,15 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#121212">
-    <title>Smart Wave Looper</title>
+    <title>Sequence Looper</title>
     
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
     
-    <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiU21hcnQgV2F2ZSBMb29wZXIiLCJzaG9ydF9uYW1lIjoiTG9vcGVyIiwic3RhcnRfdXJsIjoiLiIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiMxMjEyMTIiLCJ0aGVtZV9jb2xvciI6IiMwMGQxYjIiLCJpY29ucyI6W3sic3JjIjoiZGF0YTppbWFnZS9zdmcreG1sO2Jhc2U2NCxQSE4yWnlCNGJXeHVjejBuaUhSMGNEb3ZMM2QzZHk1M015NXZjbWN2TWpBd01DOXpkbWNnZG1sbGQwSnZlRDBuTUEwS01EQW5JREF3SjIxcFkyeGxJRnM5SnpVd0p5QmplVHQ5SnpVd0lISjFQU2N6TXpNbklHWnBiR3c5SXpNd1pHMWlNaWN2UGp3dmMzZG5QZz09Iiwic2l6ZXMiOiIxOTJ4MTkyIiwidHlwZSI6ImltYWdlL3N2Zyt4bWwifV19">
+    <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiU2VxdWVuY2UgTG9vcGVyIiwic2hvcnRfbmFtZSI6Ikxvb3BlciIsInN0YXJ0X3VybCI6Ii4iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29xvciI6IiMxMjEyMTIiLCJ0aGVtZV9jb2xvciI6IiMwMGQxYjIiLCJpY29ucyI6W3sic3JjIjoiZGF0YTppbWFnZS9zdmcreG1sO2Jhc2U2NCxQSE4yWnlCNGJXeHVjejBuaUhSMGNEb3ZMM2QzZHk1M015NXZjbWN2TWpBd01DOXpkbWNnZG1sbGQwSnZlRDBuTUEwS01EQW5JREF3SjIxcFkyeGxJRnM5SnpVd0p5QmplVHQ5SnpVd0lISjFQU2N6TXpNbklHWnBiR3c5SXpNd1pHMWlNaWN2UGp3dmMzZG5QZz09Iiwic2l6ZXMiOiIxOTJ4MTkyIiwidHlwZSI6ImltYWdlL3N2Zyt4bWwifV19">
 
     <style>
         :root {
-            --pedal-size: 190px;
+            --pedal-size: 170px; /* Smaller pedal to fit new window */
             --safe-bottom: env(safe-area-inset-bottom, 20px);
         }
 
@@ -38,7 +38,7 @@
             padding: 10px 15px calc(10px + var(--safe-bottom)) 15px;
         }
 
-        /* --- VISUALIZER --- */
+        /* --- VISUALIZER (Top Window) --- */
         .viz-container {
             flex: 0 0 auto;
             margin-bottom: 5px;
@@ -46,11 +46,48 @@
         }
         canvas {
             width: 100%;
-            height: 160px; /* Taller for better view */
+            height: 130px; 
             background: #1a1a1a;
-            border-radius: 8px;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
             border: 1px solid #333;
+            border-bottom: none;
             display: block;
+        }
+
+        /* --- SEQUENCE STRIP (Bottom Window) --- */
+        #sequence-strip {
+            width: 100%;
+            height: 50px;
+            background: #222;
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+            border: 1px solid #333;
+            border-top: 1px solid #444;
+            display: flex;
+            overflow: hidden; /* Hide scroll bars */
+            margin-bottom: 10px;
+            position: relative;
+        }
+        
+        .seq-block {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+            border-right: 1px solid #121212;
+            transition: background 0.1s;
+            color: #ccc;
+            background: #2a2a2a;
+        }
+        
+        /* The active block during playback */
+        .seq-block.is-active {
+            background: #ffe08a; /* Yellow */
+            color: #333;
+            box-shadow: 0 0 10px #ffe08a;
         }
 
         /* --- CONTROLS --- */
@@ -60,43 +97,34 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 15px;
+            gap: 10px;
         }
 
         /* --- TUNE PANEL --- */
         #tune-panel {
             width: 100%;
             background: #222;
-            padding: 10px 12px;
+            padding: 8px 12px;
             border-radius: 8px;
             border: 1px solid #444;
-            display: none; /* Hidden until recording exists */
+            display: none; 
         }
         .tune-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
         .tune-row:last-child { margin-bottom: 0; }
-        .tune-label-text { font-size: 0.8rem; color: #888; text-transform: uppercase; font-weight: bold; width: 70px;}
-        
+        .tune-label-text { font-size: 0.75rem; color: #888; text-transform: uppercase; font-weight: bold; width: 60px;}
         .tune-btn-group { display: flex; align-items: center; gap: 8px; flex: 1; justify-content: flex-end;}
         .tune-btn {
-            background: #333;
-            border: 1px solid #555;
-            color: #fff;
-            width: 44px;
-            height: 40px;
-            border-radius: 6px;
-            font-weight: bold;
-            font-size: 1.4rem;
-            cursor: pointer;
-            padding: 0;
-            line-height: 1;
+            background: #333; border: 1px solid #555; color: #fff;
+            width: 40px; height: 35px; border-radius: 6px;
+            font-weight: bold; font-size: 1.2rem; cursor: pointer; padding: 0; line-height: 1;
         }
-        .tune-btn:active { background: #555; transform: translateY(1px); }
-        .tune-val { font-size: 0.75rem; color: #aaa; width: 40px; text-align: center; font-family: monospace;}
+        .tune-btn:active { background: #555; }
+        .tune-val { font-size: 0.7rem; color: #aaa; width: 35px; text-align: center; font-family: monospace;}
 
         /* --- PEDAL --- */
         #pedal-btn {
@@ -106,7 +134,7 @@
             border: 6px solid #2c2c2c;
             background: #333;
             color: #fff;
-            font-size: 1.6rem;
+            font-size: 1.5rem;
             font-weight: 800;
             text-transform: uppercase;
             box-shadow: 0 10px 25px rgba(0,0,0,0.5), inset 0 2px 10px rgba(255,255,255,0.1);
@@ -134,7 +162,7 @@
         .slider-wrapper { width: 100%; max-width: 280px; }
         .threshold-label { display: flex; justify-content: space-between; font-size: 0.75rem; color: #888; margin-bottom: 4px; }
         input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%; background: #00d1b2; margin-top: -10px; box-shadow: 0 0 5px rgba(0,0,0,0.5);}
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%; background: #00d1b2; margin-top: -10px; }
         input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; background: #444; border-radius: 2px; }
 
         /* --- BOTTOM --- */
@@ -152,15 +180,25 @@
 <div class="main-container">
     
     <div class="viz-container">
-        <h1 class="title is-6 has-text-centered has-text-grey-light mb-2">Smart Wave Looper</h1>
+        <h1 class="title is-6 has-text-centered has-text-grey-light mb-1">Sequence Looper</h1>
+        
+        <!-- Top: Waveform -->
         <canvas id="visualizer"></canvas>
-        <p id="status-message" class="has-text-centered mt-2 has-text-grey is-size-7">Tap Power to Initialize</p>
+        
+        <!-- Bottom: Sequence Blocks -->
+        <div id="sequence-strip">
+            <div style="width:100%; display:flex; align-items:center; justify-content:center; color:#555; font-size:0.8rem;">
+                Sequence Data (Empty)
+            </div>
+        </div>
+
+        <p id="status-message" class="has-text-centered mt-1 has-text-grey is-size-7">Tap Power to Initialize</p>
     </div>
 
     <!-- TRIM EDITOR -->
     <div id="tune-panel">
         <div class="tune-row">
-            <span class="tune-label-text" style="color:#48c774">Start (Trim)</span>
+            <span class="tune-label-text" style="color:#48c774">Trim Start</span>
             <div class="tune-btn-group">
                 <button class="tune-btn" onclick="nudgeStart(-0.02)">&lsaquo;</button>
                 <span class="tune-val">20ms</span>
@@ -168,7 +206,7 @@
             </div>
         </div>
         <div class="tune-row">
-            <span class="tune-label-text" style="color:#f14668">End (Trim)</span>
+            <span class="tune-label-text" style="color:#f14668">Trim End</span>
             <div class="tune-btn-group">
                 <button class="tune-btn" onclick="nudgeEnd(-0.02)">&lsaquo;</button>
                 <span class="tune-val">20ms</span>
@@ -180,7 +218,7 @@
     <div class="controls-area">
         <div class="slider-wrapper">
             <div class="threshold-label">
-                <span>Auto-Start Trigger</span>
+                <span>Auto-Trigger Level</span>
                 <span id="thresh-val">50</span>
             </div>
             <input id="threshold-slider" type="range" min="1" max="100" value="50">
@@ -188,7 +226,7 @@
 
         <button id="pedal-btn" class="status-init">POWER<br>ON</button>
         
-        <button id="test-btn" class="button is-small is-rounded is-dark is-outlined mt-1" style="width: 150px;">Test Speaker</button>
+        <button id="test-btn" class="button is-small is-rounded is-dark is-outlined" style="width: 150px;">Test Speaker</button>
     </div>
 
     <div class="secondary-controls">
@@ -223,15 +261,16 @@
     let preRollBuffer = []; 
     let threshold = 0.05; 
     
-    // Playback Region
+    // Playback
     let loopStart = 0;
     let loopEnd = 0;
-    
-    // Playhead tracking
     let playbackStartTime = 0;
     let isLooping = false;
 
-    // Elements
+    // Sequence Analysis Data
+    let sequenceData = []; // Array of { id: number, startTime: number, endTime: number }
+
+    // DOM Elements
     const pedalBtn = document.getElementById('pedal-btn');
     const stopBtn = document.getElementById('stop-btn');
     const clearBtn = document.getElementById('clear-btn');
@@ -240,10 +279,10 @@
     const statusMsg = document.getElementById('status-message');
     const canvas = document.getElementById('visualizer');
     const ctx = canvas.getContext('2d');
+    const seqStrip = document.getElementById('sequence-strip');
     const slider = document.getElementById('threshold-slider');
     const threshVal = document.getElementById('thresh-val');
 
-    // High Res Canvas
     const dpr = window.devicePixelRatio || 1;
     canvas.width = canvas.offsetWidth * dpr;
     canvas.height = canvas.offsetHeight * dpr;
@@ -289,8 +328,6 @@
 
     async function startMic() {
         if (micStream && micStream.active && state !== STATES.PLAYING) return;
-        
-        // Ensure Speaker output is released by mic if needed
         if (audioCtx.state === 'suspended') await audioCtx.resume();
 
         micStream = await navigator.mediaDevices.getUserMedia({
@@ -317,7 +354,7 @@
 
         processor.onaudioprocess = processAudio;
         
-        drawLoop(); // Start visualizer loop
+        drawLoop();
         updateUI(STATES.IDLE);
     }
 
@@ -328,11 +365,9 @@
         const chunk = new Float32Array(input);
 
         if (state === STATES.ARMED) {
-            // Keep ~170ms pre-roll
             preRollBuffer.push(chunk);
             if (preRollBuffer.length > 2) preRollBuffer.shift();
 
-            // Threshold Check
             let triggerIdx = -1;
             for (let i = 0; i < chunk.length; i++) {
                 if (Math.abs(chunk[i]) > threshold) {
@@ -343,7 +378,6 @@
 
             if (triggerIdx !== -1) {
                 state = STATES.RECORDING;
-                // Add Pre-Roll to recording to capture attack
                 recordedChunks = [...preRollBuffer]; 
                 recordedChunks.push(chunk);
                 requestAnimationFrame(() => updateUI(STATES.RECORDING));
@@ -360,6 +394,8 @@
         
         recordedChunks = [];
         preRollBuffer = [];
+        sequenceData = [];
+        seqStrip.innerHTML = '<div style="width:100%; display:flex; align-items:center; justify-content:center; color:#555; font-size:0.8rem;">Ready</div>';
         updateUI(STATES.ARMED);
     }
 
@@ -380,8 +416,7 @@
             offset += c.length;
         }
 
-        // --- INTELLIGENT AUTO-TRIM ---
-        // 1. Find the first sample crossing the threshold
+        // Auto Trim Logic
         let triggerIndex = 0;
         for (let i = 0; i < rawBuffer.length; i++) {
             if (Math.abs(rawBuffer[i]) > threshold) {
@@ -389,28 +424,136 @@
                 break;
             }
         }
-
-        // 2. Backtrack 100ms (0.1s) to include the "breath" or "attack"
         const safetyMargin = Math.floor(audioCtx.sampleRate * 0.1); 
         const adjustedStart = Math.max(0, triggerIndex - safetyMargin);
 
         loopBuffer = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
         loopBuffer.getChannelData(0).set(rawBuffer);
 
-        // Set markers based on intelligent detection
         loopStart = adjustedStart / audioCtx.sampleRate;
         loopEnd = loopBuffer.duration;
 
+        // --- ANALYZE STRUCTURE (NO AI) ---
+        analyzeSequence(loopBuffer.getChannelData(0), audioCtx.sampleRate);
+
         playLoop();
     }
+
+    // --- FREQUENCY ANALYSIS ALGORITHM ---
+    function analyzeSequence(pcmData, sampleRate) {
+        // We will slice the audio into chunks (e.g. 200ms)
+        // Perform simple zero-crossing or FFT approximation to find dominant frequency
+        // Map frequencies to generic IDs.
+        
+        const chunkSize = Math.floor(sampleRate * 0.25); // 250ms chunks
+        const totalChunks = Math.floor(pcmData.length / chunkSize);
+        
+        let uniqueTones = new Map(); // Map quantized frequency -> ID
+        let toneCounter = 1;
+        
+        let rawSequence = [];
+
+        for(let i=0; i<totalChunks; i++) {
+            const start = i * chunkSize;
+            const end = start + chunkSize;
+            const slice = pcmData.slice(start, end);
+            
+            // Simple Zero Crossing Rate for Pitch Detection (Very lightweight)
+            let zcr = 0;
+            for(let j=1; j<slice.length; j++) {
+                if((slice[j-1] > 0 && slice[j] < 0) || (slice[j-1] < 0 && slice[j] > 0)) {
+                    zcr++;
+                }
+            }
+            
+            // Calculate RMS (Volume) to ignore silence
+            let sum = 0;
+            for(let j=0; j<slice.length; j++) sum += slice[j]*slice[j];
+            const rms = Math.sqrt(sum/slice.length);
+
+            if(rms < threshold) {
+                rawSequence.push(0); // Silence
+            } else {
+                // Approximate frequency from ZCR
+                const freq = (zcr * sampleRate) / (2 * slice.length);
+                
+                // Quantize frequency (Semi-tone buckets) to detect repetition
+                // MIDI Note Formula: 69 + 12 * log2(freq/440)
+                // We just need a rough bucket
+                let noteBucket = 0;
+                if(freq > 50) { // Ignore rumble
+                    noteBucket = Math.round(12 * Math.log2(freq / 440));
+                }
+                
+                // Map to ID
+                if(!uniqueTones.has(noteBucket)) {
+                    uniqueTones.set(noteBucket, toneCounter++);
+                }
+                rawSequence.push(uniqueTones.get(noteBucket));
+            }
+        }
+
+        // Condense sequence (Merge adjacent identical blocks)
+        sequenceData = [];
+        if(rawSequence.length > 0) {
+            let currentId = rawSequence[0];
+            let startTime = 0;
+            
+            for(let i=1; i<rawSequence.length; i++) {
+                if(rawSequence[i] !== currentId) {
+                    // Push block
+                    sequenceData.push({
+                        id: currentId,
+                        start: startTime * 0.25, // seconds
+                        end: i * 0.25
+                    });
+                    currentId = rawSequence[i];
+                    startTime = i;
+                }
+            }
+            // Push last
+            sequenceData.push({
+                id: currentId,
+                start: startTime * 0.25,
+                end: rawSequence.length * 0.25
+            });
+        }
+
+        renderSequenceStrip();
+    }
+
+    function renderSequenceStrip() {
+        seqStrip.innerHTML = '';
+        const totalDuration = loopBuffer.duration;
+
+        sequenceData.forEach(block => {
+            if(block.id === 0) return; // Skip silence blocks visually if preferred, or render as spacers
+            
+            const el = document.createElement('div');
+            el.className = 'seq-block';
+            el.innerText = block.id;
+            
+            // Calculate width percentage
+            const duration = block.end - block.start;
+            const pct = (duration / totalDuration) * 100;
+            el.style.width = pct + "%";
+            
+            // Store timing for highlighting
+            el.dataset.start = block.start;
+            el.dataset.end = block.end;
+            
+            seqStrip.appendChild(el);
+        });
+    }
+
+    // --- PLAYBACK ---
 
     function playLoop() {
         if (!loopBuffer) return;
         
         updateUI(STATES.WAIT);
-        statusMsg.innerText = "Switching to Speaker...";
+        statusMsg.innerText = "Switching Output...";
         
-        // KILL MIC for Speaker Mode
         if (micStream) {
             micStream.getTracks().forEach(t => t.stop());
             micStream = null;
@@ -439,7 +582,6 @@
         sourceNode.connect(masterGain);
         masterGain.connect(audioCtx.destination);
         
-        // Start playing
         sourceNode.start(0, loopStart);
         playbackStartTime = audioCtx.currentTime;
         isLooping = true;
@@ -449,23 +591,24 @@
         isLooping = false;
         if (sourceNode) { try{sourceNode.stop()}catch(e){}; sourceNode = null; }
         updateUI(STATES.STOPPED);
+        // Clear highlights
+        document.querySelectorAll('.seq-block').forEach(b => b.classList.remove('is-active'));
     }
 
     function clearLoop() {
         stopPlayback();
         loopBuffer = null;
         recordedChunks = [];
+        seqStrip.innerHTML = '';
         updateUI(STATES.IDLE);
     }
 
-    // --- NUDGE CONTROLS ---
+    // --- NUDGE ---
     window.nudgeStart = (val) => {
         if(!loopBuffer) return;
         let newS = loopStart + val;
-        // Constraints
         if (newS < 0) newS = 0;
         if (newS > loopEnd - 0.05) return; 
-        
         loopStart = newS;
         if(state === STATES.PLAYING) restartSource();
     };
@@ -473,10 +616,8 @@
     window.nudgeEnd = (val) => {
         if(!loopBuffer) return;
         let newE = loopEnd + val;
-        // Constraints
         if (newE > loopBuffer.duration) newE = loopBuffer.duration;
         if (newE < loopStart + 0.05) return;
-
         loopEnd = newE;
         if(sourceNode) sourceNode.loopEnd = loopEnd; 
     };
@@ -489,14 +630,38 @@
         startSourceNode();
     }
 
-    // --- DRAWING LOGIC ---
+    // --- DRAWING ---
     function drawLoop() {
         if (state === STATES.PLAYING || state === STATES.STOPPED) {
             drawWaveform();
+            updateSequenceHighlight();
         } else {
             drawRealtimeViz();
         }
         requestAnimationFrame(drawLoop);
+    }
+
+    function updateSequenceHighlight() {
+        if(!isLooping || state !== STATES.PLAYING) return;
+        
+        const totalDur = loopBuffer.duration;
+        const currentTotalTime = audioCtx.currentTime - playbackStartTime;
+        const loopDuration = loopEnd - loopStart;
+        const pos = loopStart + (currentTotalTime % loopDuration);
+
+        // Highlight blocks
+        const blocks = document.querySelectorAll('.seq-block');
+        blocks.forEach(b => {
+            const start = parseFloat(b.dataset.start);
+            const end = parseFloat(b.dataset.end);
+            
+            // Check intersection with playhead
+            if(pos >= start && pos < end) {
+                b.classList.add('is-active');
+            } else {
+                b.classList.remove('is-active');
+            }
+        });
     }
 
     function drawRealtimeViz() {
@@ -523,7 +688,6 @@
         }
         ctx.stroke();
 
-        // Threshold Lines
         const cy = h/2;
         const thPx = threshold * 300; 
         ctx.strokeStyle = 'rgba(255,255,255,0.2)';
@@ -543,63 +707,47 @@
         ctx.clearRect(0,0,w,h);
 
         const data = loopBuffer.getChannelData(0);
-        // Resample for display
         const step = Math.ceil(data.length / w);
         
-        // 1. Find MAX amplitude in the entire buffer to normalize
-        // This ensures the waveform always looks "big" (60-90% vertical fill)
         let maxAmp = 0;
-        // Optimization: Sample every 100th point to find max quickly
         for(let i=0; i<data.length; i+=100) {
             if(Math.abs(data[i]) > maxAmp) maxAmp = Math.abs(data[i]);
         }
-        if (maxAmp < 0.01) maxAmp = 0.01; // Avoid division by zero
-        
-        // Scaling factor: Height / 2 / maxAmp * 0.9 (Leave 10% headroom)
+        if (maxAmp < 0.01) maxAmp = 0.01; 
         const scale = (h / 2) / maxAmp * 0.9;
         const center = h / 2;
 
         ctx.fillStyle = '#444'; 
         
-        // 2. Draw Waveform
         for(let i=0; i < w; i++) {
-            let min = 1.0;
-            let max = -1.0;
+            let min = 1.0; let max = -1.0;
             const startIdx = i * step;
-            // Get min/max in chunk
             for (let j=0; j<step && startIdx+j < data.length; j++) {
                 const datum = data[startIdx + j];
                 if (datum < min) min = datum;
                 if (datum > max) max = datum;
             }
-            // Draw Normalized Stick
             const yMin = center + (min * scale);
             const yMax = center + (max * scale);
             ctx.fillRect(i, yMin, 1, Math.max(1, yMax - yMin));
         }
 
-        // 3. Draw Trim Areas
         const totalDur = loopBuffer.duration;
         const startX = (loopStart / totalDur) * w;
         const endX = (loopEnd / totalDur) * w;
 
-        // Overlay Excluded Areas (Darken)
         ctx.fillStyle = 'rgba(0,0,0,0.6)';
-        ctx.fillRect(0, 0, startX, h); // Left Silence
-        ctx.fillRect(endX, 0, w - endX, h); // Right Silence
+        ctx.fillRect(0, 0, startX, h); 
+        ctx.fillRect(endX, 0, w - endX, h); 
 
-        // Start Line (Green)
         ctx.lineWidth = 2;
         ctx.strokeStyle = '#48c774';
         ctx.beginPath(); ctx.moveTo(startX, 0); ctx.lineTo(startX, h); ctx.stroke();
 
-        // End Line (Red)
         ctx.strokeStyle = '#f14668';
         ctx.beginPath(); ctx.moveTo(endX, 0); ctx.lineTo(endX, h); ctx.stroke();
         
-        // 4. Draw PLAYHEAD
         if (state === STATES.PLAYING && isLooping) {
-            // Calculate current position relative to loopStart
             const currentTotalTime = audioCtx.currentTime - playbackStartTime;
             const loopDuration = loopEnd - loopStart;
             const positionInLoop = currentTotalTime % loopDuration;
@@ -609,10 +757,7 @@
             
             ctx.strokeStyle = '#fff';
             ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(playHeadX, 0);
-            ctx.lineTo(playHeadX, h);
-            ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(playHeadX, 0); ctx.lineTo(playHeadX, h); ctx.stroke();
         }
     }
 
@@ -625,40 +770,17 @@
 
         switch(state) {
             case STATES.IDLE:
-                pedalBtn.classList.add('status-idle');
-                pedalBtn.innerHTML = "TAP TO<br>ARM";
-                statusMsg.innerText = "Ready.";
-                break;
+                pedalBtn.classList.add('status-idle'); pedalBtn.innerHTML = "TAP TO<br>ARM"; statusMsg.innerText = "Ready."; break;
             case STATES.ARMED:
-                pedalBtn.classList.add('status-armed');
-                pedalBtn.innerHTML = "WAITING...";
-                statusMsg.innerText = "Play to start!";
-                break;
+                pedalBtn.classList.add('status-armed'); pedalBtn.innerHTML = "WAITING..."; statusMsg.innerText = "Play to start!"; break;
             case STATES.RECORDING:
-                pedalBtn.classList.add('status-recording');
-                pedalBtn.innerHTML = "TAP TO<br>LOOP";
-                statusMsg.innerText = "Recording...";
-                break;
+                pedalBtn.classList.add('status-recording'); pedalBtn.innerHTML = "TAP TO<br>LOOP"; statusMsg.innerText = "Recording..."; break;
             case STATES.WAIT:
-                pedalBtn.classList.add('status-wait');
-                pedalBtn.innerHTML = "...";
-                break;
+                pedalBtn.classList.add('status-wait'); pedalBtn.innerHTML = "..."; break;
             case STATES.PLAYING:
-                pedalBtn.classList.add('status-playing');
-                pedalBtn.innerHTML = "STOP";
-                statusMsg.innerText = "Loop Playing";
-                stopBtn.disabled = false;
-                clearBtn.disabled = false;
-                tunePanel.style.display = 'block';
-                break;
+                pedalBtn.classList.add('status-playing'); pedalBtn.innerHTML = "STOP"; statusMsg.innerText = "Loop Playing"; stopBtn.disabled = false; clearBtn.disabled = false; tunePanel.style.display = 'block'; break;
             case STATES.STOPPED:
-                pedalBtn.classList.add('status-idle');
-                pedalBtn.innerHTML = "PLAY";
-                statusMsg.innerText = "Stopped";
-                stopBtn.disabled = true;
-                clearBtn.disabled = false;
-                tunePanel.style.display = 'block';
-                break;
+                pedalBtn.classList.add('status-idle'); pedalBtn.innerHTML = "PLAY"; statusMsg.innerText = "Stopped"; stopBtn.disabled = true; clearBtn.disabled = false; tunePanel.style.display = 'block'; break;
         }
     }
 </script>
