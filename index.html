@@ -6,13 +6,11 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#121212">
-    <title>Speaker Looper</title>
+    <title>Loud Speaker Looper</title>
     
-    <!-- Bulma CSS Framework -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
     
-    <!-- Inline PWA Manifest -->
-    <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiU3BlYWtlciBMb29wZXIiLCJzaG9ydF9uYW1lIjoiTG9vcGVyIiwic3RhcnRfdXJsIjoiLiIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiMxMjEyMTIiLCJ0aGVtZV9jb2xvciI6IiMwMGQxYjIiLCJpY29ucyI6W3sic3JjIjoiZGF0YTppbWFnZS9zdmcreG1sO2Jhc2U2NCxQSE4yWnlCNGJXeHVjejBuaUhSMGNEb3ZMM2QzZHk1M015NXZjbWN2TWpBd01DOXpkbWNnZG1sbGQwSnZlRDBuTUEwS01EQW5JREF3SjIxcFkyeGxJRnM5SnpVd0p5QmplVHQ5SnpVd0lISjFQU2N6TXpNbklHWnBiR3c5SXpNd1pHMWlNaWN2UGp3dmMzZG5QZz09Iiwic2l6ZXMiOiIxOTJ4MTkyIiwidHlwZSI6ImltYWdlL3N2Zyt4bWwifV19">
+    <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiTG91ZBMb29wZXIiLCJzaG9ydF9uYW1lIjoiTG9vcGVyIiwic3RhcnRfdXJsIjoiLiIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiMxMjEyMTIiLCJ0aGVtZV9jb2xvciI6IiMwMGQxYjIiLCJpY29ucyI6W3sic3JjIjoiZGF0YTppbWFnZS9zdmcreG1sO2Jhc2U2NCxQSE4yWnlCNGJXeHVjejBuaUhSMGNEb3ZMM2QzZHk1M015NXZjbWN2TWpBd01DOXpkbWNnZG1sbGQwSnZlRDBuTUEwS01EQW5JREF3SjIxcFkyeGxJRnM5SnpVd0p5QmplVHQ5SnpVd0lISjFQU2N6TXpNbklHWnBiR3c5SXpNd1pHMWlNaWN2UGp3dmMzZG5QZz09Iiwic2l6ZXMiOiIxOTJ4MTkyIiwidHlwZSI6ImltYWdlL3N2Zyt4bWwifV19">
 
     <style>
         :root {
@@ -48,9 +46,10 @@
             position: relative;
         }
 
+        /* Canvas is taller now to show waveforms better */
         canvas {
             width: 100%;
-            height: 160px;
+            height: 200px; 
             background: #1a1a1a;
             border-radius: 12px;
             border: 1px solid #333;
@@ -106,7 +105,6 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.6), inset 0 0 30px rgba(0,0,0,0.4);
         }
 
-        /* States */
         .status-init { background: linear-gradient(145deg, #3e8ed0, #296fa8); border-color: #205e8e !important; }
         .status-idle { background: linear-gradient(145deg, #4a4a4a, #363636); border-color: #2b2b2b !important; color: #aaa !important; }
         .status-armed { 
@@ -143,7 +141,6 @@
             border-radius: 8px;
         }
 
-        /* Range Input */
         input[type=range] {
             -webkit-appearance: none;
             width: 100%;
@@ -169,21 +166,18 @@
 <body>
 
 <div class="main-container">
-    
     <div class="viz-container">
-        <h1 class="title is-5 has-text-centered has-text-grey-light mb-4">Speaker Looper</h1>
+        <h1 class="title is-5 has-text-centered has-text-grey-light mb-4">Loud Speaker Looper</h1>
         <canvas id="visualizer"></canvas>
         <p id="status-message" class="has-text-centered mt-3 has-text-grey">Tap Power to Initialize</p>
     </div>
 
     <div class="controls-area">
-        
         <div class="slider-wrapper">
             <div class="threshold-label">
-                <span>Trigger Threshold</span>
+                <span>Trigger Sensitivity</span>
                 <span id="thresh-val">50</span>
             </div>
-            <!-- Increased Range: 1 to 100, Default 50 -->
             <input id="threshold-slider" type="range" min="1" max="100" value="50">
         </div>
 
@@ -210,14 +204,14 @@
     let state = STATES.INIT;
     let audioCtx = null;
     let micStream = null;
+    let inputGain = null; // New Gain Node for volume boost
     let analyser = null;
     let processor = null;
     let sourceNode = null;
     let loopBuffer = null;
     let recordedChunks = [];
-    let threshold = 0.05; // Will be derived from slider
+    let threshold = 0.05; 
 
-    // DOM
     const pedalBtn = document.getElementById('pedal-btn');
     const stopBtn = document.getElementById('stop-btn');
     const clearBtn = document.getElementById('clear-btn');
@@ -227,28 +221,24 @@
     const slider = document.getElementById('threshold-slider');
     const threshVal = document.getElementById('thresh-val');
 
-    // Canvas Setup
     const dpr = window.devicePixelRatio || 1;
     canvas.width = canvas.offsetWidth * dpr;
     canvas.height = canvas.offsetHeight * dpr;
     ctx.scale(dpr, dpr);
 
-    // Event Listeners
     slider.addEventListener('input', updateThreshold);
-    
-    // Initial Calc
     updateThreshold(); 
 
     function updateThreshold() {
         const val = parseInt(slider.value);
         threshVal.innerText = val;
-        // Map 1-100 to approx 0.002 - 0.20
-        // 50 => ~0.05
+        // Higher sensitivity = Lower threshold
+        // Map 1-100 to approx 0.005 - 0.2
         threshold = val / 1000; 
     }
 
     pedalBtn.addEventListener('click', async () => {
-        if (state === STATES.INIT) await initAudio();
+        if (state === STATES.INIT) await initContextAndMic();
         else if (state === STATES.IDLE) armLooper();
         else if (state === STATES.ARMED) cancelArming();
         else if (state === STATES.RECORDING) finishRecording();
@@ -259,33 +249,44 @@
     stopBtn.addEventListener('click', stopPlayback);
     clearBtn.addEventListener('click', clearLoop);
 
-    // Audio Engine
-    async function initAudio() {
+    async function initContextAndMic() {
         try {
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            audioCtx = new AudioContext({ latencyHint: 'interactive' });
-            await enableMic();
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext({ latencyHint: 'interactive' });
+            }
+            if (audioCtx.state === 'suspended') await audioCtx.resume();
+            await startMic();
         } catch (e) {
             alert("Microphone Access Required");
+            console.error(e);
         }
     }
 
-    async function enableMic() {
-        // EchoCancellation: false helps getting raw audio, but still defaults to earpiece on iOS usually
+    async function startMic() {
+        if (micStream && micStream.active) return; // Already running
+
         micStream = await navigator.mediaDevices.getUserMedia({
             audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
         });
 
-        const source = audioCtx.createMediaStreamSource(micStream);
+        const micSource = audioCtx.createMediaStreamSource(micStream);
+        
+        // 1. ADD INPUT GAIN (Boosts volume 3.5x for better detection & playback volume)
+        inputGain = audioCtx.createGain();
+        inputGain.gain.value = 3.5; 
+
+        // 2. Setup Analyser & Processor
         analyser = audioCtx.createAnalyser();
         analyser.fftSize = 2048;
-        
         processor = audioCtx.createScriptProcessor(4096, 1, 1);
         
-        source.connect(analyser);
+        // 3. Chain: Mic -> Gain -> Analyser -> Processor -> Mute -> Out
+        micSource.connect(inputGain);
+        inputGain.connect(analyser);
         analyser.connect(processor);
         
-        // Mute feedback to prevent squeal
+        // Mute monitoring to avoid feedback
         const mute = audioCtx.createGain();
         mute.gain.value = 0;
         processor.connect(mute);
@@ -297,8 +298,8 @@
             const input = e.inputBuffer.getChannelData(0);
 
             if (state === STATES.ARMED) {
-                // DETECT START
                 let idx = -1;
+                // Threshold logic applied to BOOSTED signal
                 for (let i=0; i<input.length; i++) {
                     if (Math.abs(input[i]) > threshold) {
                         idx = i;
@@ -307,7 +308,6 @@
                 }
                 
                 if (idx !== -1) {
-                    // Trigger found!
                     recordedChunks.push(new Float32Array(input.slice(idx)));
                     state = STATES.RECORDING;
                     requestAnimationFrame(() => updateUI(STATES.RECORDING));
@@ -322,15 +322,14 @@
     }
 
     async function armLooper() {
-        if (audioCtx.state === 'suspended') audioCtx.resume();
+        // Resume context in case it was suspended
+        if (audioCtx.state === 'suspended') await audioCtx.resume();
         
-        // If mic was killed for speaker playback, restart it now
+        // Restart Mic if it was killed for speaker playback
         if (!micStream || !micStream.active) {
-            // Need to stop playback if any
-            if(sourceNode) { try{sourceNode.stop()}catch(e){}; sourceNode=null;}
-            await enableMic();
+            await startMic();
         }
-
+        
         recordedChunks = [];
         updateUI(STATES.ARMED);
     }
@@ -346,6 +345,7 @@
             return;
         }
 
+        // Flatten buffer
         let len = 0;
         for(let c of recordedChunks) len += c.length;
         const buf = new Float32Array(len);
@@ -364,17 +364,20 @@
     function playLoop() {
         if (!loopBuffer) return;
 
-        // CRITICAL: Stop Microphone to force iOS to switch to Loudspeaker
+        // *** SPEAKER MODE FIX ***
+        // 1. Kill the microphone stream immediately. This tells iOS "Call ended, switch to media speaker".
         if (micStream) {
             micStream.getTracks().forEach(t => t.stop());
             micStream = null;
-            // Disconnect processor to save CPU
-            if(processor) processor.disconnect();
-            if(analyser) analyser.disconnect();
         }
+        // 2. Disconnect processor to save CPU
+        if (processor) { processor.disconnect(); processor = null; }
+        if (analyser) { analyser.disconnect(); analyser = null; }
 
+        // 3. Stop previous source
         if (sourceNode) { try{sourceNode.stop()}catch(e){}; sourceNode.disconnect(); }
 
+        // 4. Create and start source
         sourceNode = audioCtx.createBufferSource();
         sourceNode.buffer = loopBuffer;
         sourceNode.loop = true;
@@ -393,8 +396,6 @@
         stopPlayback();
         loopBuffer = null;
         updateUI(STATES.IDLE);
-        // We do not auto-restart mic here to save battery/noise. 
-        // Mic restarts when user taps "Tap to Arm".
     }
 
     function updateUI(newState) {
@@ -407,29 +408,29 @@
             case STATES.IDLE:
                 pedalBtn.classList.add('status-idle');
                 pedalBtn.innerHTML = "TAP TO<br>ARM";
-                statusMsg.innerText = "Ready. Set threshold & tap to arm.";
+                statusMsg.innerText = "Ready. Tap to Arm.";
                 break;
             case STATES.ARMED:
                 pedalBtn.classList.add('status-armed');
-                pedalBtn.innerHTML = "LISTENING...";
-                statusMsg.innerText = "Waiting for sound...";
+                pedalBtn.innerHTML = "WAITING...";
+                statusMsg.innerText = "Make sound to start!";
                 break;
             case STATES.RECORDING:
                 pedalBtn.classList.add('status-recording');
                 pedalBtn.innerHTML = "TAP TO<br>LOOP";
-                statusMsg.innerText = "Recording! Tap to close loop.";
+                statusMsg.innerText = "Recording...";
                 break;
             case STATES.PLAYING:
                 pedalBtn.classList.add('status-playing');
                 pedalBtn.innerHTML = "STOP";
-                statusMsg.innerText = "Playing Loop (Speaker Mode)";
+                statusMsg.innerText = "Playing Loop (Speaker)";
                 stopBtn.disabled = false;
                 clearBtn.disabled = false;
                 break;
             case STATES.STOPPED:
                 pedalBtn.classList.add('status-idle');
                 pedalBtn.innerHTML = "PLAY";
-                statusMsg.innerText = "Stopped. Tap to play.";
+                statusMsg.innerText = "Stopped.";
                 stopBtn.disabled = true;
                 clearBtn.disabled = false;
                 break;
@@ -438,11 +439,9 @@
 
     function drawViz() {
         if(state === STATES.PLAYING || state === STATES.STOPPED) {
-            // If mic is off (playing), just clear canvas or draw idle line
-            if(!micStream) {
+             if(!micStream) {
                  ctx.fillStyle = '#1a1a1a';
                  ctx.fillRect(0,0, canvas.width/dpr, canvas.height/dpr);
-                 // Draw play indicator maybe?
                  return; 
             }
         }
@@ -460,7 +459,7 @@
         ctx.fillStyle = '#1a1a1a';
         ctx.fillRect(0, 0, w, h);
 
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 3; // Thicker line
         ctx.strokeStyle = (state === STATES.RECORDING) ? '#f14668' : (state === STATES.ARMED ? '#ffdd57' : '#00d1b2');
 
         ctx.beginPath();
@@ -468,7 +467,7 @@
         let x = 0;
 
         for(let i = 0; i < bufferLength; i++) {
-            const v = data[i] / 128.0;
+            const v = data[i] / 128.0; 
             const y = v * h / 2;
             if(i === 0) ctx.moveTo(x, y);
             else ctx.lineTo(x, y);
@@ -478,10 +477,10 @@
 
         // Draw Threshold Lines
         const cy = h / 2;
-        // Threshold visual scale approx
-        const thPx = threshold * 500; 
+        // Visual scale adjustment for the boosted signal
+        const thPx = threshold * 400; 
         
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
         ctx.setLineDash([5, 5]);
         ctx.beginPath();
         ctx.moveTo(0, cy - thPx); ctx.lineTo(w, cy - thPx);
