@@ -6,7 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#121212">
-    <title>Sequence Looper</title>
+    <title>Chord Sequence Looper</title>
     
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
     
@@ -14,7 +14,7 @@
 
     <style>
         :root {
-            --pedal-size: 170px; /* Smaller pedal to fit new window */
+            --pedal-size: 160px;
             --safe-bottom: env(safe-area-inset-bottom, 20px);
         }
 
@@ -38,7 +38,7 @@
             padding: 10px 15px calc(10px + var(--safe-bottom)) 15px;
         }
 
-        /* --- VISUALIZER (Top Window) --- */
+        /* --- VISUALIZER --- */
         .viz-container {
             flex: 0 0 auto;
             margin-bottom: 5px;
@@ -55,39 +55,42 @@
             display: block;
         }
 
-        /* --- SEQUENCE STRIP (Bottom Window) --- */
+        /* --- SEQUENCE STRIP --- */
         #sequence-strip {
             width: 100%;
-            height: 50px;
-            background: #222;
+            height: 60px;
+            background: #1e1e1e;
             border-bottom-left-radius: 8px;
             border-bottom-right-radius: 8px;
             border: 1px solid #333;
             border-top: 1px solid #444;
             display: flex;
-            overflow: hidden; /* Hide scroll bars */
-            margin-bottom: 10px;
+            overflow: hidden;
             position: relative;
         }
         
         .seq-block {
             height: 100%;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
-            font-size: 1.1rem;
-            border-right: 1px solid #121212;
-            transition: background 0.1s;
-            color: #ccc;
-            background: #2a2a2a;
+            border-right: 1px solid #000;
+            transition: all 0.1s;
+            color: #888;
+            background: #2b2b2b;
+            position: relative;
+            min-width: 5px; /* Ensure tiny blocks have size */
         }
         
-        /* The active block during playback */
+        .seq-num { font-size: 1.4rem; font-weight: 800; line-height: 1; }
+        .seq-label { font-size: 0.6rem; text-transform: uppercase; margin-top: 2px; }
+
         .seq-block.is-active {
-            background: #ffe08a; /* Yellow */
+            background: #ffe08a;
             color: #333;
-            box-shadow: 0 0 10px #ffe08a;
+            box-shadow: inset 0 0 15px rgba(255, 255, 255, 0.5);
+            z-index: 10;
         }
 
         /* --- CONTROLS --- */
@@ -162,7 +165,7 @@
         .slider-wrapper { width: 100%; max-width: 280px; }
         .threshold-label { display: flex; justify-content: space-between; font-size: 0.75rem; color: #888; margin-bottom: 4px; }
         input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%; background: #00d1b2; margin-top: -10px; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%; background: #00d1b2; margin-top: -10px; box-shadow: 0 0 5px rgba(0,0,0,0.5); }
         input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; background: #444; border-radius: 2px; }
 
         /* --- BOTTOM --- */
@@ -180,22 +183,20 @@
 <div class="main-container">
     
     <div class="viz-container">
-        <h1 class="title is-6 has-text-centered has-text-grey-light mb-1">Sequence Looper</h1>
+        <h1 class="title is-6 has-text-centered has-text-grey-light mb-1">Chord Sequence Looper</h1>
         
-        <!-- Top: Waveform -->
         <canvas id="visualizer"></canvas>
         
-        <!-- Bottom: Sequence Blocks -->
+        <!-- SEQUENCE WINDOW -->
         <div id="sequence-strip">
-            <div style="width:100%; display:flex; align-items:center; justify-content:center; color:#555; font-size:0.8rem;">
-                Sequence Data (Empty)
+            <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#555; font-size:0.8rem;">
+                Sequence Analysis (Waiting for Loop)
             </div>
         </div>
 
         <p id="status-message" class="has-text-centered mt-1 has-text-grey is-size-7">Tap Power to Initialize</p>
     </div>
 
-    <!-- TRIM EDITOR -->
     <div id="tune-panel">
         <div class="tune-row">
             <span class="tune-label-text" style="color:#48c774">Trim Start</span>
@@ -267,10 +268,10 @@
     let playbackStartTime = 0;
     let isLooping = false;
 
-    // Sequence Analysis Data
-    let sequenceData = []; // Array of { id: number, startTime: number, endTime: number }
+    // Sequence
+    let sequenceData = [];
 
-    // DOM Elements
+    // DOM
     const pedalBtn = document.getElementById('pedal-btn');
     const stopBtn = document.getElementById('stop-btn');
     const clearBtn = document.getElementById('clear-btn');
@@ -395,7 +396,7 @@
         recordedChunks = [];
         preRollBuffer = [];
         sequenceData = [];
-        seqStrip.innerHTML = '<div style="width:100%; display:flex; align-items:center; justify-content:center; color:#555; font-size:0.8rem;">Ready</div>';
+        seqStrip.innerHTML = '<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#555; font-size:0.8rem;">Ready</div>';
         updateUI(STATES.ARMED);
     }
 
@@ -416,7 +417,7 @@
             offset += c.length;
         }
 
-        // Auto Trim Logic
+        // Auto Trim
         let triggerIndex = 0;
         for (let i = 0; i < rawBuffer.length; i++) {
             if (Math.abs(rawBuffer[i]) > threshold) {
@@ -433,91 +434,100 @@
         loopStart = adjustedStart / audioCtx.sampleRate;
         loopEnd = loopBuffer.duration;
 
-        // --- ANALYZE STRUCTURE (NO AI) ---
+        // Perform Analysis on the full buffer
         analyzeSequence(loopBuffer.getChannelData(0), audioCtx.sampleRate);
 
         playLoop();
     }
 
-    // --- FREQUENCY ANALYSIS ALGORITHM ---
+    // --- ENHANCED SEQUENCE ANALYZER (No AI) ---
     function analyzeSequence(pcmData, sampleRate) {
-        // We will slice the audio into chunks (e.g. 200ms)
-        // Perform simple zero-crossing or FFT approximation to find dominant frequency
-        // Map frequencies to generic IDs.
-        
-        const chunkSize = Math.floor(sampleRate * 0.25); // 250ms chunks
+        // 1. Chunking
+        // Using 250ms chunks to stabilize chord detection
+        const chunkDuration = 0.25; 
+        const chunkSize = Math.floor(sampleRate * chunkDuration);
         const totalChunks = Math.floor(pcmData.length / chunkSize);
         
-        let uniqueTones = new Map(); // Map quantized frequency -> ID
-        let toneCounter = 1;
+        let rawIds = [];
+        let uniqueSignatures = []; // Array of "Pitch Signatures"
         
-        let rawSequence = [];
-
+        // Analysis Settings
+        const silenceThresh = 0.02; // Very low threshold to detect quiet chords
+        
         for(let i=0; i<totalChunks; i++) {
             const start = i * chunkSize;
             const end = start + chunkSize;
             const slice = pcmData.slice(start, end);
             
-            // Simple Zero Crossing Rate for Pitch Detection (Very lightweight)
-            let zcr = 0;
-            for(let j=1; j<slice.length; j++) {
-                if((slice[j-1] > 0 && slice[j] < 0) || (slice[j-1] < 0 && slice[j] > 0)) {
-                    zcr++;
-                }
-            }
-            
-            // Calculate RMS (Volume) to ignore silence
+            // A. Check Volume (RMS)
             let sum = 0;
             for(let j=0; j<slice.length; j++) sum += slice[j]*slice[j];
             const rms = Math.sqrt(sum/slice.length);
 
-            if(rms < threshold) {
-                rawSequence.push(0); // Silence
-            } else {
-                // Approximate frequency from ZCR
-                const freq = (zcr * sampleRate) / (2 * slice.length);
-                
-                // Quantize frequency (Semi-tone buckets) to detect repetition
-                // MIDI Note Formula: 69 + 12 * log2(freq/440)
-                // We just need a rough bucket
-                let noteBucket = 0;
-                if(freq > 50) { // Ignore rumble
-                    noteBucket = Math.round(12 * Math.log2(freq / 440));
-                }
-                
-                // Map to ID
-                if(!uniqueTones.has(noteBucket)) {
-                    uniqueTones.set(noteBucket, toneCounter++);
-                }
-                rawSequence.push(uniqueTones.get(noteBucket));
+            if(rms < silenceThresh) {
+                rawIds.push(0); // 0 = Silence
+                continue;
             }
+
+            // B. Zero Crossing Rate (Proxy for Pitch)
+            // We use a simplified ZCR to create a "Signature"
+            let zcr = 0;
+            for(let j=1; j<slice.length; j++) {
+                if((slice[j-1] > 0 && slice[j] < 0) || (slice[j-1] < 0 && slice[j] > 0)) zcr++;
+            }
+            
+            // Normalize ZCR relative to sample rate
+            // This roughly correlates to frequency
+            const signature = zcr; 
+
+            // C. Fuzzy Matching
+            // Is this signature close to an existing one?
+            let matchId = -1;
+            // Tolerance: Allow ~10% variation (vibrato/imperfect playing)
+            const tolerance = signature * 0.15; 
+
+            for(let k=0; k<uniqueSignatures.length; k++) {
+                if(Math.abs(uniqueSignatures[k] - signature) < tolerance) {
+                    matchId = k + 1; // IDs start at 1
+                    break;
+                }
+            }
+
+            if(matchId === -1) {
+                // New Unique Sound Found
+                uniqueSignatures.push(signature);
+                matchId = uniqueSignatures.length;
+            }
+            
+            rawIds.push(matchId);
         }
 
-        // Condense sequence (Merge adjacent identical blocks)
+        // 2. Post-Process: Merge adjacent blocks & remove glitches
         sequenceData = [];
-        if(rawSequence.length > 0) {
-            let currentId = rawSequence[0];
-            let startTime = 0;
-            
-            for(let i=1; i<rawSequence.length; i++) {
-                if(rawSequence[i] !== currentId) {
-                    // Push block
-                    sequenceData.push({
-                        id: currentId,
-                        start: startTime * 0.25, // seconds
-                        end: i * 0.25
-                    });
-                    currentId = rawSequence[i];
-                    startTime = i;
-                }
+        if(rawIds.length === 0) return;
+
+        let currentId = rawIds[0];
+        let startTime = 0;
+
+        for(let i=1; i<rawIds.length; i++) {
+            if(rawIds[i] !== currentId) {
+                // If block is too short (< 2 chunks = 0.5s), ignore it (denoising) unless it's the only one
+                // Simple logic: just push for now to see feedback
+                sequenceData.push({
+                    id: currentId,
+                    start: startTime * chunkDuration,
+                    end: i * chunkDuration
+                });
+                currentId = rawIds[i];
+                startTime = i;
             }
-            // Push last
-            sequenceData.push({
-                id: currentId,
-                start: startTime * 0.25,
-                end: rawSequence.length * 0.25
-            });
         }
+        // Push last
+        sequenceData.push({
+            id: currentId,
+            start: startTime * chunkDuration,
+            end: rawIds.length * chunkDuration
+        });
 
         renderSequenceStrip();
     }
@@ -525,25 +535,34 @@
     function renderSequenceStrip() {
         seqStrip.innerHTML = '';
         const totalDuration = loopBuffer.duration;
+        let hasContent = false;
 
         sequenceData.forEach(block => {
-            if(block.id === 0) return; // Skip silence blocks visually if preferred, or render as spacers
+            // Ignore silence blocks (ID 0)
+            if(block.id === 0) return;
             
+            hasContent = true;
             const el = document.createElement('div');
             el.className = 'seq-block';
-            el.innerText = block.id;
             
-            // Calculate width percentage
-            const duration = block.end - block.start;
-            const pct = (duration / totalDuration) * 100;
+            // Inner Content
+            el.innerHTML = `<span class="seq-num">${block.id}</span>`;
+            
+            // Width
+            const dur = block.end - block.start;
+            const pct = (dur / totalDuration) * 100;
             el.style.width = pct + "%";
             
-            // Store timing for highlighting
+            // Data for Playhead
             el.dataset.start = block.start;
             el.dataset.end = block.end;
             
             seqStrip.appendChild(el);
         });
+
+        if(!hasContent) {
+            seqStrip.innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#666;">No Tonal Content Detected</div>';
+        }
     }
 
     // --- PLAYBACK ---
@@ -591,7 +610,6 @@
         isLooping = false;
         if (sourceNode) { try{sourceNode.stop()}catch(e){}; sourceNode = null; }
         updateUI(STATES.STOPPED);
-        // Clear highlights
         document.querySelectorAll('.seq-block').forEach(b => b.classList.remove('is-active'));
     }
 
@@ -647,6 +665,7 @@
         const totalDur = loopBuffer.duration;
         const currentTotalTime = audioCtx.currentTime - playbackStartTime;
         const loopDuration = loopEnd - loopStart;
+        // Position within loop (absolute time relative to buffer start)
         const pos = loopStart + (currentTotalTime % loopDuration);
 
         // Highlight blocks
