@@ -6,16 +6,15 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#121212">
-    <title>Pro Trim Looper</title>
+    <title>Waveform Looper</title>
     
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
     
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiUHJvIFRyaW0gTG9vcGVyIiwic2hvcnRfbmFtZSI6Ikxvb3BlciIsInN0YXJ0X3VybCI6Ii4iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29xvciI6IiMxMjEyMTIiLCJ0aGVtZV9jb2xvciI6IiMwMGQxYjIiLCJpY29ucyI6W3sic3JjIjoiZGF0YTppbWFnZS9zdmcreG1sO2Jhc2U2NCxQSE4yWnlCNGJXeHVjejBuaUhSMGNEb3ZMM2QzZHk1M015NXZjbWN2TWpBd01DOXpkbWNnZG1sbGQwSnZlRDBuTUEwS01EQW5JREF3SjIxcFkyeGxJRnM5SnpVd0p5QmplVHQ5SnpVd0lISjFQU2N6TXpNbklHWnBiR3c5SXpNd1pHMWlNaWN2UGp3dmMzZG5QZz09Iiwic2l6ZXMiOiIxOTJ4MTkyIiwidHlwZSI6ImltYWdlL3N2Zyt4bWwifV19">
+    <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiV2F2ZWZvcm0gTG9vcGVyIiwic2hvcnRfbmFtZSI6Ikxvb3BlciIsInN0YXJ0X3VybCI6Ii4iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29xvciI6IiMxMjEyMTIiLCJ0aGVtZV9jb2xvciI6IiMwMGQxYjIiLCJpY29ucyI6W3sic3JjIjoiZGF0YTppbWFnZS9zdmcreG1sO2Jhc2U2NCxQSE4yWnlCNGJXeHVjejBuaUhSMGNEb3ZMM2QzZHk1M015NXZjbWN2TWpBd01DOXpkbWNnZG1sbGQwSnZlRDBuTUEwS01EQW5JREF3SjIxcFkyeGxJRnM5SnpVd0p5QmplVHQ5SnpVd0lISjFQU2N6TXpNbklHWnBiR3c5SXpNd1pHMWlNaWN2UGp3dmMzZG5QZz09Iiwic2l6ZXMiOiIxOTJ4MTkyIiwidHlwZSI6ImltYWdlL3N2Zyt4bWwifV19">
 
     <style>
         :root {
-            --pedal-size: 200px; /* Slightly smaller to fit controls */
+            --pedal-size: 190px;
             --safe-bottom: env(safe-area-inset-bottom, 20px);
         }
 
@@ -39,20 +38,22 @@
             padding: 10px 15px calc(10px + var(--safe-bottom)) 15px;
         }
 
-        /* Top Area: Visualizer */
+        /* VISUALIZER */
         .viz-container {
             flex: 0 0 auto;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
+            position: relative;
         }
         canvas {
             width: 100%;
-            height: 120px;
+            height: 140px;
             background: #1a1a1a;
             border-radius: 8px;
             border: 1px solid #333;
+            display: block;
         }
 
-        /* Middle Area: Controls & Pedal */
+        /* CONTROLS */
         .controls-area {
             flex: 1;
             display: flex;
@@ -60,25 +61,27 @@
             align-items: center;
             justify-content: center;
             gap: 15px;
-            position: relative;
         }
 
-        /* Fine Tune Panel */
+        /* FINE TUNE PANEL */
         #tune-panel {
             width: 100%;
-            background: #1e1e1e;
-            padding: 10px;
+            background: #222;
+            padding: 8px 12px;
             border-radius: 8px;
-            border: 1px solid #333;
-            display: none; /* Hidden until loop exists */
+            border: 1px solid #444;
+            display: none;
         }
         .tune-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
         .tune-row:last-child { margin-bottom: 0; }
+        .tune-label-text { font-size: 0.75rem; color: #888; text-transform: uppercase; font-weight: bold; }
+        
+        .tune-btn-group { display: flex; align-items: center; gap: 4px; }
         .tune-btn {
             background: #333;
             border: 1px solid #555;
@@ -87,11 +90,13 @@
             height: 35px;
             border-radius: 4px;
             font-weight: bold;
+            font-size: 1.2rem;
+            cursor: pointer;
         }
         .tune-btn:active { background: #555; }
-        .tune-label { font-size: 0.8rem; color: #aaa; width: 60px; text-align: center; }
+        .tune-val { font-size: 0.8rem; color: #fff; width: 50px; text-align: center; font-family: monospace;}
 
-        /* Pedal */
+        /* PEDAL */
         #pedal-btn {
             width: var(--pedal-size);
             height: var(--pedal-size);
@@ -123,14 +128,14 @@
         @keyframes pulse-yellow { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
         @keyframes pulse-red { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
 
-        /* Slider */
+        /* SLIDER */
         .slider-wrapper { width: 100%; max-width: 280px; }
         .threshold-label { display: flex; justify-content: space-between; font-size: 0.75rem; color: #888; margin-bottom: 4px; }
         input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%; background: #00d1b2; margin-top: -8px; }
         input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; background: #444; border-radius: 2px; }
 
-        /* Bottom Controls */
+        /* BOTTOM */
         .secondary-controls {
             flex: 0 0 auto;
             display: flex;
@@ -145,27 +150,27 @@
 <div class="main-container">
     
     <div class="viz-container">
-        <h1 class="title is-6 has-text-centered has-text-grey-light mb-2">Pro Trim Looper</h1>
+        <h1 class="title is-6 has-text-centered has-text-grey-light mb-2">Waveform Looper</h1>
         <canvas id="visualizer"></canvas>
         <p id="status-message" class="has-text-centered mt-2 has-text-grey is-size-7">Tap Power to Initialize</p>
     </div>
 
-    <!-- Fine Tune Controls (Visible only when loop exists) -->
+    <!-- TRIM EDITOR -->
     <div id="tune-panel">
         <div class="tune-row">
-            <span class="has-text-grey is-size-7">Start Point</span>
-            <div>
-                <button class="tune-btn" onclick="nudgeStart(-0.05)">-</button>
-                <span class="tune-label">50ms</span>
-                <button class="tune-btn" onclick="nudgeStart(0.05)">+</button>
+            <span class="tune-label-text" style="color:#48c774">Start Point</span>
+            <div class="tune-btn-group">
+                <button class="tune-btn" onclick="nudgeStart(-0.02)">&lsaquo;</button>
+                <span class="tune-val">20ms</span>
+                <button class="tune-btn" onclick="nudgeStart(0.02)">&rsaquo;</button>
             </div>
         </div>
         <div class="tune-row">
-            <span class="has-text-grey is-size-7">Loop Length</span>
-            <div>
-                <button class="tune-btn" onclick="nudgeEnd(-0.05)">-</button>
-                <span class="tune-label">50ms</span>
-                <button class="tune-btn" onclick="nudgeEnd(0.05)">+</button>
+            <span class="tune-label-text" style="color:#f14668">End Point</span>
+            <div class="tune-btn-group">
+                <button class="tune-btn" onclick="nudgeEnd(-0.02)">&lsaquo;</button>
+                <span class="tune-val">20ms</span>
+                <button class="tune-btn" onclick="nudgeEnd(0.02)">&rsaquo;</button>
             </div>
         </div>
     </div>
@@ -173,7 +178,7 @@
     <div class="controls-area">
         <div class="slider-wrapper">
             <div class="threshold-label">
-                <span>Auto-Start Sensitivity</span>
+                <span>Auto-Start Trigger</span>
                 <span id="thresh-val">50</span>
             </div>
             <input id="threshold-slider" type="range" min="1" max="100" value="50">
@@ -181,7 +186,7 @@
 
         <button id="pedal-btn" class="status-init">POWER<br>ON</button>
         
-        <button id="test-btn" class="button is-small is-rounded is-dark is-outlined mt-2" style="width: 150px;">Test Speaker</button>
+        <button id="test-btn" class="button is-small is-rounded is-dark is-outlined mt-1" style="width: 150px;">Test Speaker</button>
     </div>
 
     <div class="secondary-controls">
@@ -211,17 +216,16 @@
     let sourceNode = null;
     let masterGain = null;
 
-    // Buffer Logic
     let loopBuffer = null;
     let recordedChunks = [];
-    let preRollBuffer = []; // Stores the last 2 chunks BEFORE trigger
+    let preRollBuffer = []; 
     let threshold = 0.05; 
     
-    // Nudge Logic
-    let currentLoopStart = 0;
-    let currentLoopEnd = 0;
+    // Playback Region
+    let loopStart = 0;
+    let loopEnd = 0;
 
-    // UI Elements
+    // Elements
     const pedalBtn = document.getElementById('pedal-btn');
     const stopBtn = document.getElementById('stop-btn');
     const clearBtn = document.getElementById('clear-btn');
@@ -234,20 +238,18 @@
     const threshVal = document.getElementById('thresh-val');
 
     const dpr = window.devicePixelRatio || 1;
+    // Set fixed internal resolution for better drawing
     canvas.width = canvas.offsetWidth * dpr;
     canvas.height = canvas.offsetHeight * dpr;
     ctx.scale(dpr, dpr);
 
-    // --- SLIDER ---
     slider.addEventListener('input', () => {
         const val = parseInt(slider.value);
         threshVal.innerText = val;
         threshold = val / 1000; 
     });
-    // Init threshold
     threshold = 50 / 1000;
 
-    // --- TEST SPEAKER ---
     testBtn.addEventListener('click', async () => {
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         if (audioCtx.state === 'suspended') await audioCtx.resume();
@@ -260,7 +262,6 @@
         setTimeout(() => osc.stop(), 500);
     });
 
-    // --- MAIN PEDAL ---
     pedalBtn.addEventListener('click', async () => {
         if (state === STATES.INIT) await initSystem();
         else if (state === STATES.IDLE) armLooper();
@@ -289,7 +290,7 @@
 
         const micSource = audioCtx.createMediaStreamSource(micStream);
         inputGain = audioCtx.createGain();
-        inputGain.gain.value = 4.0; // High Input Gain for clear detection
+        inputGain.gain.value = 4.0; 
         
         analyser = audioCtx.createAnalyser();
         analyser.fftSize = 2048;
@@ -300,7 +301,6 @@
         inputGain.connect(analyser);
         analyser.connect(processor);
         
-        // Mute monitoring
         const mute = audioCtx.createGain();
         mute.gain.value = 0;
         processor.connect(mute);
@@ -308,7 +308,7 @@
 
         processor.onaudioprocess = processAudio;
         
-        drawViz();
+        drawLoop(); // Start visualizer loop
         updateUI(STATES.IDLE);
     }
 
@@ -316,15 +316,14 @@
         if (state !== STATES.ARMED && state !== STATES.RECORDING) return;
         
         const input = e.inputBuffer.getChannelData(0);
-        // Make a copy
         const chunk = new Float32Array(input);
 
         if (state === STATES.ARMED) {
-            // 1. Maintain Pre-Roll (Keep last 2 chunks ~170ms)
+            // Keep ~170ms pre-roll
             preRollBuffer.push(chunk);
             if (preRollBuffer.length > 2) preRollBuffer.shift();
 
-            // 2. Scan for Threshold
+            // Threshold Check
             let triggerIdx = -1;
             for (let i = 0; i < chunk.length; i++) {
                 if (Math.abs(chunk[i]) > threshold) {
@@ -334,15 +333,10 @@
             }
 
             if (triggerIdx !== -1) {
-                // TRIGGERED!
                 state = STATES.RECORDING;
-                
-                // Save Pre-Roll data first (The attack)
+                // Add Pre-Roll to recording
                 recordedChunks = [...preRollBuffer]; 
-                
-                // Add current chunk
                 recordedChunks.push(chunk);
-                
                 requestAnimationFrame(() => updateUI(STATES.RECORDING));
             }
         } 
@@ -368,7 +362,6 @@
     function finishRecording() {
         if (recordedChunks.length === 0) { updateUI(STATES.IDLE); return; }
 
-        // 1. Flatten Buffer
         let len = 0;
         for (let c of recordedChunks) len += c.length;
         const rawBuffer = new Float32Array(len);
@@ -378,28 +371,22 @@
             offset += c.length;
         }
 
-        // 2. INTELLIGENT TRIM (HEAD)
-        // Scan the flattened buffer to find the REAL start
-        // (Since we added Pre-Roll, silence is at the start)
-        let realStart = 0;
+        // NON-DESTRUCTIVE: We don't slice audio. We find the start index.
+        let detectedStart = 0;
         for (let i = 0; i < rawBuffer.length; i++) {
             if (Math.abs(rawBuffer[i]) > threshold) {
-                // Found it. Backtrack 10ms (approx 480 samples) for safety/breath
-                realStart = Math.max(0, i - 1000); 
+                // Backtrack 200 samples for smoothness
+                detectedStart = Math.max(0, i - 200); 
                 break;
             }
         }
 
-        // 3. Create Final AudioBuffer (Trimmed Head, Manual Tail)
-        const trimLen = rawBuffer.length - realStart;
-        const trimmedData = rawBuffer.slice(realStart);
-        
-        loopBuffer = audioCtx.createBuffer(1, trimLen, audioCtx.sampleRate);
-        loopBuffer.getChannelData(0).set(trimmedData);
+        loopBuffer = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
+        loopBuffer.getChannelData(0).set(rawBuffer);
 
-        // Reset Loop Points
-        currentLoopStart = 0;
-        currentLoopEnd = loopBuffer.duration;
+        // Set markers based on detection
+        loopStart = detectedStart / audioCtx.sampleRate;
+        loopEnd = loopBuffer.duration;
 
         playLoop();
     }
@@ -407,7 +394,6 @@
     function playLoop() {
         if (!loopBuffer) return;
         
-        // SWITCH TO SPEAKER
         updateUI(STATES.WAIT);
         statusMsg.innerText = "Switching to Speaker...";
         
@@ -420,23 +406,28 @@
         if (sourceNode) { try{sourceNode.stop()}catch(e){}; sourceNode.disconnect(); }
 
         setTimeout(() => {
-            sourceNode = audioCtx.createBufferSource();
-            sourceNode.buffer = loopBuffer;
-            sourceNode.loop = true;
-            
-            // Apply Nudge
-            sourceNode.loopStart = currentLoopStart;
-            sourceNode.loopEnd = currentLoopEnd;
-
-            masterGain = audioCtx.createGain();
-            masterGain.gain.value = 1.0; 
-
-            sourceNode.connect(masterGain);
-            masterGain.connect(audioCtx.destination);
-            
-            sourceNode.start(0, currentLoopStart);
+            startSourceNode();
             updateUI(STATES.PLAYING);
         }, 500); 
+    }
+
+    function startSourceNode() {
+        sourceNode = audioCtx.createBufferSource();
+        sourceNode.buffer = loopBuffer;
+        sourceNode.loop = true;
+        
+        // Apply markers
+        sourceNode.loopStart = loopStart;
+        sourceNode.loopEnd = loopEnd;
+
+        masterGain = audioCtx.createGain();
+        masterGain.gain.value = 1.0; 
+
+        sourceNode.connect(masterGain);
+        masterGain.connect(audioCtx.destination);
+        
+        // Start playing at the specific offset
+        sourceNode.start(0, loopStart);
     }
 
     function stopPlayback() {
@@ -451,45 +442,138 @@
         updateUI(STATES.IDLE);
     }
 
-    // --- NUDGE FUNCTIONS ---
-    window.nudgeStart = (amount) => {
-        if (!loopBuffer) return;
-        let newStart = currentLoopStart + amount;
-        if (newStart < 0) newStart = 0;
-        if (newStart >= currentLoopEnd - 0.1) return; // Prevent crossing
-
-        currentLoopStart = newStart;
-        restartSource();
+    // --- NUDGE CONTROLS ---
+    window.nudgeStart = (val) => {
+        if(!loopBuffer) return;
+        let newS = loopStart + val;
+        // Constraints
+        if (newS < 0) newS = 0;
+        if (newS > loopEnd - 0.05) return; 
+        
+        loopStart = newS;
+        if(state === STATES.PLAYING) restartSource();
+        drawWaveform(); // Update Lines
     };
 
-    window.nudgeEnd = (amount) => {
-        if (!loopBuffer) return;
-        let newEnd = currentLoopEnd + amount;
-        if (newEnd > loopBuffer.duration) newEnd = loopBuffer.duration;
-        if (newEnd <= currentLoopStart + 0.1) return;
+    window.nudgeEnd = (val) => {
+        if(!loopBuffer) return;
+        let newE = loopEnd + val;
+        // Constraints
+        if (newE > loopBuffer.duration) newE = loopBuffer.duration;
+        if (newE < loopStart + 0.05) return;
 
-        currentLoopEnd = newEnd;
-        if (sourceNode) sourceNode.loopEnd = currentLoopEnd;
+        loopEnd = newE;
+        if(sourceNode) sourceNode.loopEnd = loopEnd; // Can update live
+        drawWaveform(); // Update Lines
     };
 
     function restartSource() {
-        if (state === STATES.PLAYING && sourceNode) {
-            // Simple restart to apply new loopStart immediately
-            sourceNode.stop();
+        if(sourceNode) {
+            try{ sourceNode.stop(); }catch(e){}
             sourceNode.disconnect();
-            
-            sourceNode = audioCtx.createBufferSource();
-            sourceNode.buffer = loopBuffer;
-            sourceNode.loop = true;
-            sourceNode.loopStart = currentLoopStart;
-            sourceNode.loopEnd = currentLoopEnd;
-            sourceNode.connect(masterGain);
-            masterGain.connect(audioCtx.destination);
-            sourceNode.start(0, currentLoopStart);
         }
+        startSourceNode();
     }
 
-    // --- UI UPDATES ---
+    // --- DRAWING LOGIC ---
+    function drawLoop() {
+        if (state === STATES.PLAYING || state === STATES.STOPPED) {
+            drawWaveform();
+        } else {
+            drawRealtimeViz();
+        }
+        requestAnimationFrame(drawLoop);
+    }
+
+    function drawRealtimeViz() {
+        if(!analyser) return;
+        const bufferLength = analyser.frequencyBinCount;
+        const data = new Uint8Array(bufferLength);
+        analyser.getByteTimeDomainData(data);
+
+        const w = canvas.width / dpr;
+        const h = canvas.height / dpr;
+
+        ctx.clearRect(0, 0, w, h);
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = (state === STATES.RECORDING) ? '#f14668' : (state === STATES.ARMED ? '#ffdd57' : '#00d1b2');
+
+        ctx.beginPath();
+        const sliceWidth = w * 1.0 / bufferLength;
+        let x = 0;
+        for(let i = 0; i < bufferLength; i++) {
+            const v = data[i] / 128.0; 
+            const y = v * h / 2;
+            if(i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            x += sliceWidth;
+        }
+        ctx.stroke();
+
+        // Threshold Lines
+        const cy = h/2;
+        const thPx = threshold * 300; 
+        ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+        ctx.setLineDash([5,5]);
+        ctx.beginPath();
+        ctx.moveTo(0, cy-thPx); ctx.lineTo(w, cy-thPx);
+        ctx.moveTo(0, cy+thPx); ctx.lineTo(w, cy+thPx);
+        ctx.stroke();
+        ctx.setLineDash([]);
+    }
+
+    function drawWaveform() {
+        if(!loopBuffer) return;
+        
+        const w = canvas.width / dpr;
+        const h = canvas.height / dpr;
+        ctx.clearRect(0,0,w,h);
+
+        const data = loopBuffer.getChannelData(0);
+        const step = Math.ceil(data.length / w);
+        const amp = h / 2;
+
+        ctx.fillStyle = '#444'; // Waveform Color
+        
+        // Draw Wave
+        for(let i=0; i < w; i++) {
+            let min = 1.0;
+            let max = -1.0;
+            // Get min/max in chunk
+            for (let j=0; j<step; j++) {
+                const datum = data[(i*step) + j];
+                if (datum < min) min = datum;
+                if (datum > max) max = datum;
+            }
+            // Draw vertical bar
+            ctx.fillRect(i, (1+min)*amp, 1, Math.max(1, (max-min)*amp));
+        }
+
+        // Draw Trim Lines
+        const totalDur = loopBuffer.duration;
+        const startX = (loopStart / totalDur) * w;
+        const endX = (loopEnd / totalDur) * w;
+
+        // Overlay Excluded Areas
+        ctx.fillStyle = 'rgba(0,0,0,0.6)';
+        ctx.fillRect(0, 0, startX, h); // Before Start
+        ctx.fillRect(endX, 0, w - endX, h); // After End
+
+        // Lines
+        ctx.lineWidth = 2;
+        
+        // Start Line (Green)
+        ctx.strokeStyle = '#48c774';
+        ctx.beginPath();
+        ctx.moveTo(startX, 0); ctx.lineTo(startX, h);
+        ctx.stroke();
+
+        // End Line (Red)
+        ctx.strokeStyle = '#f14668';
+        ctx.beginPath();
+        ctx.moveTo(endX, 0); ctx.lineTo(endX, h);
+        ctx.stroke();
+    }
+
     function updateUI(newState) {
         state = newState;
         pedalBtn.className = '';
@@ -520,7 +604,7 @@
             case STATES.PLAYING:
                 pedalBtn.classList.add('status-playing');
                 pedalBtn.innerHTML = "STOP";
-                statusMsg.innerText = "Playing Loop";
+                statusMsg.innerText = "Loop Playing";
                 stopBtn.disabled = false;
                 clearBtn.disabled = false;
                 tunePanel.style.display = 'block';
@@ -528,60 +612,12 @@
             case STATES.STOPPED:
                 pedalBtn.classList.add('status-idle');
                 pedalBtn.innerHTML = "PLAY";
-                statusMsg.innerText = "Stopped.";
+                statusMsg.innerText = "Stopped";
                 stopBtn.disabled = true;
                 clearBtn.disabled = false;
                 tunePanel.style.display = 'block';
                 break;
         }
-    }
-
-    function drawViz() {
-        if(state === STATES.PLAYING || state === STATES.STOPPED || state === STATES.WAIT) {
-             if(!micStream) {
-                 ctx.fillStyle = '#1a1a1a';
-                 ctx.fillRect(0,0, canvas.width/dpr, canvas.height/dpr);
-                 return; 
-            }
-        }
-        
-        requestAnimationFrame(drawViz);
-        if(!analyser) return;
-
-        const bufferLength = analyser.frequencyBinCount;
-        const data = new Uint8Array(bufferLength);
-        analyser.getByteTimeDomainData(data);
-
-        const w = canvas.width / dpr;
-        const h = canvas.height / dpr;
-
-        ctx.fillStyle = '#1a1a1a';
-        ctx.fillRect(0, 0, w, h);
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = (state === STATES.RECORDING) ? '#f14668' : (state === STATES.ARMED ? '#ffdd57' : '#00d1b2');
-
-        ctx.beginPath();
-        const sliceWidth = w * 1.0 / bufferLength;
-        let x = 0;
-
-        for(let i = 0; i < bufferLength; i++) {
-            const v = data[i] / 128.0; 
-            const y = v * h / 2;
-            if(i === 0) ctx.moveTo(x, y);
-            else ctx.lineTo(x, y);
-            x += sliceWidth;
-        }
-        ctx.stroke();
-
-        const cy = h / 2;
-        const thPx = threshold * 300; 
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-        ctx.setLineDash([5, 5]);
-        ctx.beginPath();
-        ctx.moveTo(0, cy - thPx); ctx.lineTo(w, cy - thPx);
-        ctx.moveTo(0, cy + thPx); ctx.lineTo(w, cy + thPx);
-        ctx.stroke();
-        ctx.setLineDash([]);
     }
 </script>
 </body>
