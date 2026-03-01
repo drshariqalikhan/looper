@@ -6,11 +6,11 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#121212">
-    <title>Waveform Looper</title>
+    <title>Smart Wave Looper</title>
     
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
     
-    <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiV2F2ZWZvcm0gTG9vcGVyIiwic2hvcnRfbmFtZSI6Ikxvb3BlciIsInN0YXJ0X3VybCI6Ii4iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29xvciI6IiMxMjEyMTIiLCJ0aGVtZV9jb2xvciI6IiMwMGQxYjIiLCJpY29ucyI6W3sic3JjIjoiZGF0YTppbWFnZS9zdmcreG1sO2Jhc2U2NCxQSE4yWnlCNGJXeHVjejBuaUhSMGNEb3ZMM2QzZHk1M015NXZjbWN2TWpBd01DOXpkbWNnZG1sbGQwSnZlRDBuTUEwS01EQW5JREF3SjIxcFkyeGxJRnM5SnpVd0p5QmplVHQ5SnpVd0lISjFQU2N6TXpNbklHWnBiR3c5SXpNd1pHMWlNaWN2UGp3dmMzZG5QZz09Iiwic2l6ZXMiOiIxOTJ4MTkyIiwidHlwZSI6ImltYWdlL3N2Zyt4bWwifV19">
+    <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiU21hcnQgV2F2ZSBMb29wZXIiLCJzaG9ydF9uYW1lIjoiTG9vcGVyIiwic3RhcnRfdXJsIjoiLiIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiMxMjEyMTIiLCJ0aGVtZV9jb2xvciI6IiMwMGQxYjIiLCJpY29ucyI6W3sic3JjIjoiZGF0YTppbWFnZS9zdmcreG1sO2Jhc2U2NCxQSE4yWnlCNGJXeHVjejBuaUhSMGNEb3ZMM2QzZHk1M015NXZjbWN2TWpBd01DOXpkbWNnZG1sbGQwSnZlRDBuTUEwS01EQW5JREF3SjIxcFkyeGxJRnM5SnpVd0p5QmplVHQ5SnpVd0lISjFQU2N6TXpNbklHWnBiR3c5SXpNd1pHMWlNaWN2UGp3dmMzZG5QZz09Iiwic2l6ZXMiOiIxOTJ4MTkyIiwidHlwZSI6ImltYWdlL3N2Zyt4bWwifV19">
 
     <style>
         :root {
@@ -38,7 +38,7 @@
             padding: 10px 15px calc(10px + var(--safe-bottom)) 15px;
         }
 
-        /* VISUALIZER */
+        /* --- VISUALIZER --- */
         .viz-container {
             flex: 0 0 auto;
             margin-bottom: 5px;
@@ -46,14 +46,14 @@
         }
         canvas {
             width: 100%;
-            height: 140px;
+            height: 160px; /* Taller for better view */
             background: #1a1a1a;
             border-radius: 8px;
             border: 1px solid #333;
             display: block;
         }
 
-        /* CONTROLS */
+        /* --- CONTROLS --- */
         .controls-area {
             flex: 1;
             display: flex;
@@ -63,40 +63,42 @@
             gap: 15px;
         }
 
-        /* FINE TUNE PANEL */
+        /* --- TUNE PANEL --- */
         #tune-panel {
             width: 100%;
             background: #222;
-            padding: 8px 12px;
+            padding: 10px 12px;
             border-radius: 8px;
             border: 1px solid #444;
-            display: none;
+            display: none; /* Hidden until recording exists */
         }
         .tune-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
         }
         .tune-row:last-child { margin-bottom: 0; }
-        .tune-label-text { font-size: 0.75rem; color: #888; text-transform: uppercase; font-weight: bold; }
+        .tune-label-text { font-size: 0.8rem; color: #888; text-transform: uppercase; font-weight: bold; width: 70px;}
         
-        .tune-btn-group { display: flex; align-items: center; gap: 4px; }
+        .tune-btn-group { display: flex; align-items: center; gap: 8px; flex: 1; justify-content: flex-end;}
         .tune-btn {
             background: #333;
             border: 1px solid #555;
             color: #fff;
-            width: 40px;
-            height: 35px;
-            border-radius: 4px;
+            width: 44px;
+            height: 40px;
+            border-radius: 6px;
             font-weight: bold;
-            font-size: 1.2rem;
+            font-size: 1.4rem;
             cursor: pointer;
+            padding: 0;
+            line-height: 1;
         }
-        .tune-btn:active { background: #555; }
-        .tune-val { font-size: 0.8rem; color: #fff; width: 50px; text-align: center; font-family: monospace;}
+        .tune-btn:active { background: #555; transform: translateY(1px); }
+        .tune-val { font-size: 0.75rem; color: #aaa; width: 40px; text-align: center; font-family: monospace;}
 
-        /* PEDAL */
+        /* --- PEDAL --- */
         #pedal-btn {
             width: var(--pedal-size);
             height: var(--pedal-size);
@@ -128,14 +130,14 @@
         @keyframes pulse-yellow { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
         @keyframes pulse-red { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
 
-        /* SLIDER */
+        /* --- SLIDER --- */
         .slider-wrapper { width: 100%; max-width: 280px; }
         .threshold-label { display: flex; justify-content: space-between; font-size: 0.75rem; color: #888; margin-bottom: 4px; }
         input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%; background: #00d1b2; margin-top: -8px; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%; background: #00d1b2; margin-top: -10px; box-shadow: 0 0 5px rgba(0,0,0,0.5);}
         input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; background: #444; border-radius: 2px; }
 
-        /* BOTTOM */
+        /* --- BOTTOM --- */
         .secondary-controls {
             flex: 0 0 auto;
             display: flex;
@@ -150,7 +152,7 @@
 <div class="main-container">
     
     <div class="viz-container">
-        <h1 class="title is-6 has-text-centered has-text-grey-light mb-2">Waveform Looper</h1>
+        <h1 class="title is-6 has-text-centered has-text-grey-light mb-2">Smart Wave Looper</h1>
         <canvas id="visualizer"></canvas>
         <p id="status-message" class="has-text-centered mt-2 has-text-grey is-size-7">Tap Power to Initialize</p>
     </div>
@@ -158,7 +160,7 @@
     <!-- TRIM EDITOR -->
     <div id="tune-panel">
         <div class="tune-row">
-            <span class="tune-label-text" style="color:#48c774">Start Point</span>
+            <span class="tune-label-text" style="color:#48c774">Start (Trim)</span>
             <div class="tune-btn-group">
                 <button class="tune-btn" onclick="nudgeStart(-0.02)">&lsaquo;</button>
                 <span class="tune-val">20ms</span>
@@ -166,7 +168,7 @@
             </div>
         </div>
         <div class="tune-row">
-            <span class="tune-label-text" style="color:#f14668">End Point</span>
+            <span class="tune-label-text" style="color:#f14668">End (Trim)</span>
             <div class="tune-btn-group">
                 <button class="tune-btn" onclick="nudgeEnd(-0.02)">&lsaquo;</button>
                 <span class="tune-val">20ms</span>
@@ -224,6 +226,10 @@
     // Playback Region
     let loopStart = 0;
     let loopEnd = 0;
+    
+    // Playhead tracking
+    let playbackStartTime = 0;
+    let isLooping = false;
 
     // Elements
     const pedalBtn = document.getElementById('pedal-btn');
@@ -237,8 +243,8 @@
     const slider = document.getElementById('threshold-slider');
     const threshVal = document.getElementById('thresh-val');
 
+    // High Res Canvas
     const dpr = window.devicePixelRatio || 1;
-    // Set fixed internal resolution for better drawing
     canvas.width = canvas.offsetWidth * dpr;
     canvas.height = canvas.offsetHeight * dpr;
     ctx.scale(dpr, dpr);
@@ -284,6 +290,9 @@
     async function startMic() {
         if (micStream && micStream.active && state !== STATES.PLAYING) return;
         
+        // Ensure Speaker output is released by mic if needed
+        if (audioCtx.state === 'suspended') await audioCtx.resume();
+
         micStream = await navigator.mediaDevices.getUserMedia({
             audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
         });
@@ -334,7 +343,7 @@
 
             if (triggerIdx !== -1) {
                 state = STATES.RECORDING;
-                // Add Pre-Roll to recording
+                // Add Pre-Roll to recording to capture attack
                 recordedChunks = [...preRollBuffer]; 
                 recordedChunks.push(chunk);
                 requestAnimationFrame(() => updateUI(STATES.RECORDING));
@@ -371,21 +380,25 @@
             offset += c.length;
         }
 
-        // NON-DESTRUCTIVE: We don't slice audio. We find the start index.
-        let detectedStart = 0;
+        // --- INTELLIGENT AUTO-TRIM ---
+        // 1. Find the first sample crossing the threshold
+        let triggerIndex = 0;
         for (let i = 0; i < rawBuffer.length; i++) {
             if (Math.abs(rawBuffer[i]) > threshold) {
-                // Backtrack 200 samples for smoothness
-                detectedStart = Math.max(0, i - 200); 
+                triggerIndex = i;
                 break;
             }
         }
 
+        // 2. Backtrack 100ms (0.1s) to include the "breath" or "attack"
+        const safetyMargin = Math.floor(audioCtx.sampleRate * 0.1); 
+        const adjustedStart = Math.max(0, triggerIndex - safetyMargin);
+
         loopBuffer = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
         loopBuffer.getChannelData(0).set(rawBuffer);
 
-        // Set markers based on detection
-        loopStart = detectedStart / audioCtx.sampleRate;
+        // Set markers based on intelligent detection
+        loopStart = adjustedStart / audioCtx.sampleRate;
         loopEnd = loopBuffer.duration;
 
         playLoop();
@@ -397,6 +410,7 @@
         updateUI(STATES.WAIT);
         statusMsg.innerText = "Switching to Speaker...";
         
+        // KILL MIC for Speaker Mode
         if (micStream) {
             micStream.getTracks().forEach(t => t.stop());
             micStream = null;
@@ -416,7 +430,6 @@
         sourceNode.buffer = loopBuffer;
         sourceNode.loop = true;
         
-        // Apply markers
         sourceNode.loopStart = loopStart;
         sourceNode.loopEnd = loopEnd;
 
@@ -426,11 +439,14 @@
         sourceNode.connect(masterGain);
         masterGain.connect(audioCtx.destination);
         
-        // Start playing at the specific offset
+        // Start playing
         sourceNode.start(0, loopStart);
+        playbackStartTime = audioCtx.currentTime;
+        isLooping = true;
     }
 
     function stopPlayback() {
+        isLooping = false;
         if (sourceNode) { try{sourceNode.stop()}catch(e){}; sourceNode = null; }
         updateUI(STATES.STOPPED);
     }
@@ -452,7 +468,6 @@
         
         loopStart = newS;
         if(state === STATES.PLAYING) restartSource();
-        drawWaveform(); // Update Lines
     };
 
     window.nudgeEnd = (val) => {
@@ -463,8 +478,7 @@
         if (newE < loopStart + 0.05) return;
 
         loopEnd = newE;
-        if(sourceNode) sourceNode.loopEnd = loopEnd; // Can update live
-        drawWaveform(); // Update Lines
+        if(sourceNode) sourceNode.loopEnd = loopEnd; 
     };
 
     function restartSource() {
@@ -529,49 +543,77 @@
         ctx.clearRect(0,0,w,h);
 
         const data = loopBuffer.getChannelData(0);
+        // Resample for display
         const step = Math.ceil(data.length / w);
-        const amp = h / 2;
-
-        ctx.fillStyle = '#444'; // Waveform Color
         
-        // Draw Wave
+        // 1. Find MAX amplitude in the entire buffer to normalize
+        // This ensures the waveform always looks "big" (60-90% vertical fill)
+        let maxAmp = 0;
+        // Optimization: Sample every 100th point to find max quickly
+        for(let i=0; i<data.length; i+=100) {
+            if(Math.abs(data[i]) > maxAmp) maxAmp = Math.abs(data[i]);
+        }
+        if (maxAmp < 0.01) maxAmp = 0.01; // Avoid division by zero
+        
+        // Scaling factor: Height / 2 / maxAmp * 0.9 (Leave 10% headroom)
+        const scale = (h / 2) / maxAmp * 0.9;
+        const center = h / 2;
+
+        ctx.fillStyle = '#444'; 
+        
+        // 2. Draw Waveform
         for(let i=0; i < w; i++) {
             let min = 1.0;
             let max = -1.0;
+            const startIdx = i * step;
             // Get min/max in chunk
-            for (let j=0; j<step; j++) {
-                const datum = data[(i*step) + j];
+            for (let j=0; j<step && startIdx+j < data.length; j++) {
+                const datum = data[startIdx + j];
                 if (datum < min) min = datum;
                 if (datum > max) max = datum;
             }
-            // Draw vertical bar
-            ctx.fillRect(i, (1+min)*amp, 1, Math.max(1, (max-min)*amp));
+            // Draw Normalized Stick
+            const yMin = center + (min * scale);
+            const yMax = center + (max * scale);
+            ctx.fillRect(i, yMin, 1, Math.max(1, yMax - yMin));
         }
 
-        // Draw Trim Lines
+        // 3. Draw Trim Areas
         const totalDur = loopBuffer.duration;
         const startX = (loopStart / totalDur) * w;
         const endX = (loopEnd / totalDur) * w;
 
-        // Overlay Excluded Areas
+        // Overlay Excluded Areas (Darken)
         ctx.fillStyle = 'rgba(0,0,0,0.6)';
-        ctx.fillRect(0, 0, startX, h); // Before Start
-        ctx.fillRect(endX, 0, w - endX, h); // After End
+        ctx.fillRect(0, 0, startX, h); // Left Silence
+        ctx.fillRect(endX, 0, w - endX, h); // Right Silence
 
-        // Lines
-        ctx.lineWidth = 2;
-        
         // Start Line (Green)
+        ctx.lineWidth = 2;
         ctx.strokeStyle = '#48c774';
-        ctx.beginPath();
-        ctx.moveTo(startX, 0); ctx.lineTo(startX, h);
-        ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(startX, 0); ctx.lineTo(startX, h); ctx.stroke();
 
         // End Line (Red)
         ctx.strokeStyle = '#f14668';
-        ctx.beginPath();
-        ctx.moveTo(endX, 0); ctx.lineTo(endX, h);
-        ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(endX, 0); ctx.lineTo(endX, h); ctx.stroke();
+        
+        // 4. Draw PLAYHEAD
+        if (state === STATES.PLAYING && isLooping) {
+            // Calculate current position relative to loopStart
+            const currentTotalTime = audioCtx.currentTime - playbackStartTime;
+            const loopDuration = loopEnd - loopStart;
+            const positionInLoop = currentTotalTime % loopDuration;
+            const absolutePosition = loopStart + positionInLoop;
+            
+            const playHeadX = (absolutePosition / totalDur) * w;
+            
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(playHeadX, 0);
+            ctx.lineTo(playHeadX, h);
+            ctx.stroke();
+        }
     }
 
     function updateUI(newState) {
