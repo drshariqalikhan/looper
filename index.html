@@ -2,446 +2,569 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Pocket Looper</title>
-    
-    <!-- iOS PWA Meta Tags -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Looper">
+    <meta name="theme-color" content="#121212">
+    <title>Auto-Trim Looper</title>
     
-    <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iIzEyMTIxMiIvPjxjaXJjbGUgY3g9IjUwIiBjeT0iNTAiIHI9IjQwIiBzdHJva2U9IiNlNzRjM2MiIHN0cm9rZS13aWR0aD0iNSIgZmlsbD0ibm9uZSIvPjx0ZXh0IHg9IjUwIiB5PSI2MCIgZm9udC1zaXplPSIzMCIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfjogPC90ZXh0Pjwvc3ZnPg==">
-    <link rel="manifest" href="data:application/manifest+json;base64,ewogICJuYW1lIjogIkd1aXRhciBMb29wZXIiLAogICJzaG9ydF9uYW1lIjogIkxvb3BlciIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgIm9yaWVudGF0aW9uIjogImxhbmRzY2FwZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiIzEyMTIxMiIsCiAgInRoZW1lX2NvbG9yIjogIiNlNzRjM2MiCn0=">
+    <!-- Bulma CSS Framework -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    
+    <!-- Inline PWA Manifest (Data URI) -->
+    <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiQXV0b1RyaW0gTG9vcGVyIiwic2hvcnRfbmFtZSI6Ikxvb3BlciIsInN0YXJ0X3VybCI6Ii4iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29xvciI6IiMxMjEyMTIiLCJ0aGVtZV9jb2xvciI6IiMwMGQxcjIiLCJpY29ucyI6W3sic3JjIjoiZGF0YTppbWFnZS9zdmcreG1sO2Jhc2U2NCxQSE4yWnlCNGJXeHVjejBuaUhSMGNEb3ZMM2QzZHk1M015NXZjbWN2TWpBd01DOXpkbWNnZG1sbGQwSnZlRDBuTUEwS01EQW5JREF3SjIxcFkyeGxJRnM5SnpVd0p5QmplVHQ5SnpVd0lISjFQU2N6TXpNbklHWnBiR3c5SXpNd1pHMWlNaWN2UGp3dmMzZG5QZz09Iiwic2l6ZXMiOiIxOTJ4MTkyIiwidHlwZSI6ImltYWdlL3N2Zyt4bWwifV19">
 
     <style>
         :root {
-            --bg: #121212;
-            --accent-red: #e74c3c;
-            --accent-green: #2ecc71;
-            --accent-blue: #3498db;
-            --gray: #34495e;
-            --text: #ffffff;
+            --pedal-size: 240px;
+            --safe-bottom: env(safe-area-inset-bottom, 20px);
         }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
-            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-            display: flex;
-            flex-direction: column;
+        html, body {
+            background-color: #121212;
+            color: #ffffff;
             height: 100vh;
-            box-sizing: border-box;
+            width: 100vw;
+            overflow: hidden;
+            touch-action: manipulation; /* Prevents double-tap zoom */
             user-select: none;
             -webkit-user-select: none;
-            touch-action: manipulation;
-            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
 
-        .top-bar {
+        /* Layout */
+        .main-container {
+            height: 100%;
             display: flex;
+            flex-direction: column;
             justify-content: space-between;
-            align-items: center;
-            padding: 10px 20px;
-            background: #1a1a1a;
-            border-bottom: 2px solid #333;
-            font-size: 16px;
+            padding: 20px 20px calc(20px + var(--safe-bottom)) 20px;
         }
 
-        .toggle-container {
+        /* Visualizer Area */
+        .viz-container {
+            flex: 1;
             display: flex;
-            align-items: center;
-            gap: 10px;
-            font-weight: bold;
-            color: #f1c40f;
-        }
-
-        input[type="checkbox"] {
-            width: 20px; height: 20px; accent-color: #f1c40f;
-        }
-
-        /* --- Audio Track UI --- */
-        .track-area {
-            display: none; /* Hidden until loop is recorded */
-            height: 100px;
-            margin: 15px 20px 0 20px;
+            flex-direction: column;
+            justify-content: center;
             position: relative;
-            background: #222;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.8);
-            touch-action: none; /* Prevents scrolling while trimming */
         }
 
         canvas {
             width: 100%;
-            height: 100%;
-            display: block;
+            height: 150px;
+            background: #1a1a1a;
+            border-radius: 12px;
+            border: 1px solid #333;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
         }
 
-        .trim-overlay {
-            position: absolute;
-            top: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
-            z-index: 5;
-            pointer-events: none;
-        }
-
-        #trimLeft { left: 0; width: 0%; border-right: 3px solid var(--accent-blue); }
-        #trimRight { right: 0; width: 0%; border-left: 3px solid var(--accent-blue); }
-
-        .trim-instruction {
-            position: absolute;
-            top: 5px; left: 10px;
-            font-size: 12px;
-            color: rgba(255,255,255,0.6);
-            z-index: 10;
-            pointer-events: none;
-        }
-
-        /* --- Main Controls --- */
-        .main-controls {
-            display: flex;
-            flex: 1;
-            gap: 15px;
-            padding: 15px 20px;
-        }
-
-        button {
-            border: none;
-            border-radius: 20px;
-            font-size: 32px;
-            font-weight: 800;
-            cursor: pointer;
-            transition: transform 0.1s, filter 0.1s;
+        /* Controls */
+        .controls-area {
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            text-transform: uppercase;
+            gap: 20px;
         }
 
-        button:active { transform: scale(0.97); }
-        button:disabled { filter: grayscale(100%); opacity: 0.3; pointer-events: none; }
-
-        .sub-text { font-size: 14px; font-weight: 500; opacity: 0.7; margin-top: 10px; }
-
-        .btn-record { flex: 1.2; background: var(--accent-red); color: white; box-shadow: 0 0 20px rgba(231, 76, 60, 0.4); }
-        .right-panel { flex: 1; display: flex; flex-direction: column; gap: 15px; }
-        .btn-play { flex: 2; background: var(--accent-green); color: white; font-size: 28px; }
-        .btn-clear { flex: 1; background: var(--gray); color: white; font-size: 20px; }
+        .slider-wrapper {
+            width: 100%;
+            max-width: 300px;
+            margin-bottom: 10px;
+        }
         
-        .active-green { background: #27ae60; box-shadow: 0 0 25px var(--accent-green); }
-        .recording { animation: pulse 1s infinite alternate; background: #c0392b; }
-
-        @media screen and (orientation: portrait) {
-            body::before {
-                content: "Please rotate your phone sideways 🔄";
-                position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-                background: #121212; color: white; display: flex; align-items: center; justify-content: center;
-                font-size: 24px; font-weight: bold; text-align: center; z-index: 9999; padding: 20px;
-            }
+        .threshold-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 5px;
         }
 
-        @keyframes pulse {
-            from { box-shadow: 0 0 10px var(--accent-red); }
-            to { box-shadow: 0 0 40px var(--accent-red); }
+        /* The Main Pedal Button */
+        #pedal-btn {
+            width: var(--pedal-size);
+            height: var(--pedal-size);
+            border-radius: 50%;
+            border: 8px solid #2c2c2c;
+            background: #333;
+            color: #fff;
+            font-size: 1.8rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 2px 10px rgba(255,255,255,0.1);
+            transition: all 0.15s ease-out;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            line-height: 1.1;
+            -webkit-tap-highlight-color: transparent;
+            outline: none;
+        }
+
+        #pedal-btn:active {
+            transform: scale(0.96);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.6), inset 0 0 30px rgba(0,0,0,0.4);
+        }
+
+        /* Pedal States */
+        .status-init { background: linear-gradient(145deg, #3e8ed0, #296fa8); border-color: #205e8e !important; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+        .status-idle { background: linear-gradient(145deg, #4a4a4a, #363636); border-color: #2b2b2b !important; color: #aaa !important; }
+        .status-armed { 
+            background: linear-gradient(145deg, #ffdd57, #dcb828); 
+            border-color: #bfa026 !important; 
+            color: #5c4b00 !important; 
+            animation: pulse-yellow 1.5s infinite;
+        }
+        .status-recording { 
+            background: linear-gradient(145deg, #f14668, #c03853); 
+            border-color: #a31c36 !important; 
+            box-shadow: 0 0 30px rgba(241, 70, 104, 0.4);
+            animation: pulse-red 1s infinite;
+        }
+        .status-playing { 
+            background: linear-gradient(145deg, #48c774, #359f59); 
+            border-color: #297c45 !important; 
+            box-shadow: 0 0 30px rgba(72, 199, 116, 0.3);
+        }
+
+        @keyframes pulse-yellow { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+        @keyframes pulse-red { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
+
+        /* Secondary Buttons */
+        .secondary-controls {
+            display: flex;
+            width: 100%;
+            max-width: 320px;
+            gap: 15px;
+        }
+        
+        .secondary-controls button {
+            flex: 1;
+            height: 50px;
+            font-weight: 600;
+            border-radius: 8px;
+        }
+
+        /* Utility */
+        .is-hidden { display: none !important; }
+        
+        /* Range Input Customization */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 24px;
+            width: 24px;
+            border-radius: 50%;
+            background: #00d1b2;
+            margin-top: -10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            background: #444;
+            border-radius: 2px;
         }
     </style>
 </head>
 <body>
 
-    <div class="top-bar">
-        <span>🎸 <b>Pocket Looper</b></span>
-        <label class="toggle-container">
-            <input type="checkbox" id="countInToggle" checked> 
-            ⏱ 3-Sec Count-In (Silent)
-        </label>
-        <span style="font-size:12px; opacity:0.6;">🔊 Speaker Mode Auto-Enabled</span>
+<div class="main-container">
+    
+    <!-- Top Section: Header & Visualizer -->
+    <div class="viz-container">
+        <h1 class="title is-5 has-text-centered has-text-grey-light mb-4">Auto-Trim Looper</h1>
+        
+        <canvas id="visualizer"></canvas>
+        
+        <p id="status-message" class="has-text-centered mt-3 has-text-grey">
+            Tap Power to Initialize
+        </p>
     </div>
 
-    <!-- The Waveform & Trim Track -->
-    <div id="trackArea" class="track-area">
-        <div class="trim-instruction">👈 Drag edges to trim 👉</div>
-        <canvas id="waveform"></canvas>
-        <div id="trimLeft" class="trim-overlay"></div>
-        <div id="trimRight" class="trim-overlay"></div>
-    </div>
+    <!-- Bottom Section: Controls -->
+    <div class="controls-area">
+        
+        <!-- Threshold Slider -->
+        <div class="slider-wrapper">
+            <div class="threshold-label">
+                <span>Mic Sensitivity</span>
+                <span id="thresh-val">5%</span>
+            </div>
+            <input id="threshold-slider" type="range" min="0.01" max="0.30" step="0.01" value="0.05">
+        </div>
 
-    <div class="main-controls">
-        <button id="recordBtn" class="btn-record" onclick="handleRecordClick()">
-            🔴 Record
-            <span class="sub-text">Spacebar / Tap</span>
+        <!-- MAIN PEDAL -->
+        <button id="pedal-btn" class="status-init">
+            POWER<br>ON
         </button>
 
-        <div class="right-panel">
-            <button id="playBtn" class="btn-play" onclick="toggleLoop()" disabled>
-                ▶️ Play
-                <span class="sub-text">Enter key</span>
-            </button>
-            <button id="clearBtn" class="btn-clear" onclick="clearLoop()" disabled>
-                🗑 Clear
-                <span class="sub-text">Backspace key</span>
-            </button>
+        <!-- Secondary Actions -->
+        <div class="secondary-controls">
+            <button id="stop-btn" class="button is-warning is-light" disabled>Stop</button>
+            <button id="clear-btn" class="button is-danger is-light" disabled>Clear</button>
         </div>
     </div>
+</div>
 
-    <script>
-        let audioCtx;
-        let mediaRecorder;
-        let activeStream = null;
-        let audioChunks = [];
-        let loopBuffer = null;
-        let loopSource = null;
+<script>
+    /**
+     * PWA Service Worker Registration (Inline)
+     * Allows the app to work offline after the first load.
+     */
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            const swCode = `
+                self.addEventListener('install', e => self.skipWaiting());
+                self.addEventListener('activate', e => self.clients.claim());
+                self.addEventListener('fetch', e => {});
+            `;
+            const blob = new Blob([swCode], {type: 'application/javascript'});
+            navigator.serviceWorker.register(URL.createObjectURL(blob))
+                .catch(err => console.log('SW fail', err));
+        });
+    }
+
+    // --- State Management ---
+    const STATES = {
+        INIT: 'INIT',         // Audio Context not started
+        IDLE: 'IDLE',         // Mic active, waiting for user to Arm
+        ARMED: 'ARMED',       // Analyzing audio, waiting for threshold cross
+        RECORDING: 'RECORDING', // Saving buffer
+        PLAYING: 'PLAYING',   // Looping audio
+        STOPPED: 'STOPPED'    // Audio in memory, but silent
+    };
+
+    let currentState = STATES.INIT;
+    let audioCtx = null;
+    let micStream = null;
+    let analyser = null;
+    let processor = null; // ScriptProcessorNode (deprecated but reliable for inline raw audio access)
+    let sourceNode = null; // For playback
+    let loopBuffer = null; // The final audio buffer
+    let recordedChunks = []; // Array of Float32Arrays during recording
+    let threshold = 0.05;
+
+    // --- DOM Elements ---
+    const pedalBtn = document.getElementById('pedal-btn');
+    const stopBtn = document.getElementById('stop-btn');
+    const clearBtn = document.getElementById('clear-btn');
+    const statusMsg = document.getElementById('status-message');
+    const canvas = document.getElementById('visualizer');
+    const canvasCtx = canvas.getContext('2d');
+    const thresholdSlider = document.getElementById('threshold-slider');
+    const threshVal = document.getElementById('thresh-val');
+
+    // High DPI Canvas Setup
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    canvasCtx.scale(dpr, dpr);
+
+    // --- Event Listeners ---
+    
+    thresholdSlider.addEventListener('input', (e) => {
+        threshold = parseFloat(e.target.value);
+        threshVal.innerText = Math.round(threshold * 100) + "%";
+    });
+
+    pedalBtn.addEventListener('click', handlePedalClick);
+    stopBtn.addEventListener('click', stopPlayback);
+    clearBtn.addEventListener('click', clearLoop);
+
+    // --- Main Logic ---
+
+    async function handlePedalClick() {
+        switch (currentState) {
+            case STATES.INIT:
+                await initAudio();
+                break;
+            case STATES.IDLE:
+                armLooper();
+                break;
+            case STATES.ARMED:
+                // User cancelled arming
+                cancelArming();
+                break;
+            case STATES.RECORDING:
+                finishRecordingAndPlay();
+                break;
+            case STATES.PLAYING:
+                stopPlayback();
+                break;
+            case STATES.STOPPED:
+                playLoop();
+                break;
+        }
+    }
+
+    async function initAudio() {
+        try {
+            // 1. Create Context
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            audioCtx = new AudioContext({ latencyHint: 'interactive' });
+
+            // 2. Get Microphone (Ask Permission)
+            // EchoCancellation disabled to get raw input for better looping
+            micStream = await navigator.mediaDevices.getUserMedia({
+                audio: { 
+                    echoCancellation: false, 
+                    noiseSuppression: false, 
+                    autoGainControl: false 
+                }
+            });
+
+            // 3. Setup Nodes
+            const micSource = audioCtx.createMediaStreamSource(micStream);
+            analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 2048; // Resolution for visualizer
+
+            // ScriptProcessorNode: BufferSize 4096 (approx 85ms @ 48k)
+            // Good balance between performance and responsiveness
+            processor = audioCtx.createScriptProcessor(4096, 1, 1);
+
+            // 4. Connect Graph
+            micSource.connect(analyser);
+            analyser.connect(processor);
+            
+            // We must connect processor to destination for it to fire events, 
+            // but we use a gain node of 0 to prevent hearing the live mic directly (feedback loop)
+            const muteGain = audioCtx.createGain();
+            muteGain.gain.value = 0;
+            processor.connect(muteGain);
+            muteGain.connect(audioCtx.destination);
+
+            // 5. The Core Loop Logic
+            processor.onaudioprocess = processAudioBlock;
+
+            // 6. Start Visualizer
+            drawVisualizer();
+
+            updateUI(STATES.IDLE);
+
+        } catch (err) {
+            console.error(err);
+            statusMsg.innerText = "Error: Mic access denied or not supported.";
+            alert("Please allow Microphone access to use the Looper.");
+        }
+    }
+
+    function processAudioBlock(e) {
+        if (currentState !== STATES.ARMED && currentState !== STATES.RECORDING) return;
+
+        const inputData = e.inputBuffer.getChannelData(0);
+
+        if (currentState === STATES.ARMED) {
+            // Algorithm: Scan buffer for any sample exceeding threshold
+            let triggerIndex = -1;
+            
+            for (let i = 0; i < inputData.length; i++) {
+                if (Math.abs(inputData[i]) > threshold) {
+                    triggerIndex = i;
+                    break;
+                }
+            }
+
+            if (triggerIndex !== -1) {
+                // THRESHOLD MET: Start Recording immediately
+                // Slice the buffer from the trigger point to avoid silence at start
+                const trimmedBlock = inputData.slice(triggerIndex);
+                recordedChunks.push(new Float32Array(trimmedBlock));
+                
+                // Update State without UI lag (UI updates in separate frame usually)
+                currentState = STATES.RECORDING;
+                
+                // Manually trigger UI update for visual feedback
+                requestAnimationFrame(() => updateUI(STATES.RECORDING));
+            }
+        } 
+        else if (currentState === STATES.RECORDING) {
+            // Just push the whole block
+            recordedChunks.push(new Float32Array(inputData));
+        }
+    }
+
+    function armLooper() {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        recordedChunks = [];
+        updateUI(STATES.ARMED);
+    }
+
+    function cancelArming() {
+        recordedChunks = [];
+        updateUI(STATES.IDLE);
+    }
+
+    function finishRecordingAndPlay() {
+        if (recordedChunks.length === 0) {
+            updateUI(STATES.IDLE);
+            return;
+        }
+
+        // 1. Flatten chunks into single buffer
+        let totalLength = 0;
+        for (const chunk of recordedChunks) totalLength += chunk.length;
+
+        const combinedBuffer = new Float32Array(totalLength);
+        let offset = 0;
+        for (const chunk of recordedChunks) {
+            combinedBuffer.set(chunk, offset);
+            offset += chunk.length;
+        }
+
+        // 2. Create AudioBuffer
+        loopBuffer = audioCtx.createBuffer(1, totalLength, audioCtx.sampleRate);
+        loopBuffer.getChannelData(0).set(combinedBuffer);
+
+        // 3. Play
+        playLoop();
+    }
+
+    function playLoop() {
+        if (!loopBuffer) return;
+
+        // Stop existing if any
+        if (sourceNode) {
+            try { sourceNode.stop(); } catch(e){}
+            sourceNode.disconnect();
+        }
+
+        sourceNode = audioCtx.createBufferSource();
+        sourceNode.buffer = loopBuffer;
+        sourceNode.loop = true; // Seamless looping
+        sourceNode.connect(audioCtx.destination);
+        sourceNode.start(0);
+
+        updateUI(STATES.PLAYING);
+    }
+
+    function stopPlayback() {
+        if (sourceNode) {
+            try { sourceNode.stop(); } catch(e){}
+            sourceNode.disconnect();
+            sourceNode = null;
+        }
         
-        let isRecording = false;
-        let isLoopPlaying = false;
-        let isCountingDown = false;
-
-        // Trimming variables (0.0 to 1.0)
-        let trimStart = 0.0;
-        let trimEnd = 1.0;
-        let dragging = null;
-
-        function initAudio() {
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
+        if (loopBuffer) {
+            updateUI(STATES.STOPPED);
+        } else {
+            updateUI(STATES.IDLE);
         }
+    }
 
-        document.addEventListener('keydown', (e) => {
-            if (e.repeat) return;
-            if (e.code === 'Space') { e.preventDefault(); handleRecordClick(); }
-            else if (e.code === 'Enter') { e.preventDefault(); if (!document.getElementById('playBtn').disabled) toggleLoop(); }
-            else if (e.code === 'Backspace') { e.preventDefault(); if (!document.getElementById('clearBtn').disabled) clearLoop(); }
-        });
+    function clearLoop() {
+        stopPlayback();
+        loopBuffer = null;
+        recordedChunks = [];
+        updateUI(STATES.IDLE);
+    }
 
-        // --- Trimming Logic ---
-        const trackArea = document.getElementById('trackArea');
-        trackArea.addEventListener('pointerdown', e => {
-            const rect = trackArea.getBoundingClientRect();
-            const pct = (e.clientX - rect.left) / rect.width;
-            
-            // Check if user tapped closer to start or end
-            if (Math.abs(pct - trimStart) < Math.abs(pct - trimEnd)) dragging = 'start';
-            else dragging = 'end';
-            updateTrim(e);
-        });
+    // --- UI State Machine ---
+    function updateUI(newState) {
+        currentState = newState;
 
-        trackArea.addEventListener('pointermove', e => {
-            if (!dragging) return;
-            updateTrim(e);
-        });
+        // Reset classes
+        pedalBtn.className = '';
+        
+        stopBtn.disabled = true;
+        clearBtn.disabled = true;
 
-        window.addEventListener('pointerup', () => { 
-            if (dragging) {
-                dragging = null; 
-                // Restart playback automatically if they were playing while trimming
-                if (isLoopPlaying) {
-                    if (loopSource) loopSource.stop();
-                    startLoopPlayback();
-                }
-            }
-        });
-
-        function updateTrim(e) {
-            const rect = trackArea.getBoundingClientRect();
-            let pct = (e.clientX - rect.left) / rect.width;
-            pct = Math.max(0, Math.min(1, pct)); // clamp 0 to 1
-            
-            if (dragging === 'start') {
-                if (pct > trimEnd - 0.02) pct = trimEnd - 0.02; // minimum loop size
-                trimStart = pct;
-            } else if (dragging === 'end') {
-                if (pct < trimStart + 0.02) pct = trimStart + 0.02;
-                trimEnd = pct;
-            }
-            updateTrimUI();
+        switch (newState) {
+            case STATES.IDLE:
+                pedalBtn.classList.add('status-idle');
+                pedalBtn.innerHTML = "TAP TO<br>ARM";
+                statusMsg.innerText = "Ready. Set threshold & tap to arm.";
+                break;
+            case STATES.ARMED:
+                pedalBtn.classList.add('status-armed');
+                pedalBtn.innerHTML = "LISTENING...";
+                statusMsg.innerText = "Make sound to start recording!";
+                break;
+            case STATES.RECORDING:
+                pedalBtn.classList.add('status-recording');
+                pedalBtn.innerHTML = "TAP TO<br>LOOP";
+                statusMsg.innerText = "Recording... Tap to close loop.";
+                break;
+            case STATES.PLAYING:
+                pedalBtn.classList.add('status-playing');
+                pedalBtn.innerHTML = "STOP";
+                statusMsg.innerText = "Looping Playback";
+                stopBtn.disabled = false;
+                clearBtn.disabled = false;
+                break;
+            case STATES.STOPPED:
+                pedalBtn.classList.add('status-idle'); // Use idle styling for stopped but loaded
+                pedalBtn.innerHTML = "PLAY";
+                statusMsg.innerText = "Loop Stopped. Ready to play.";
+                stopBtn.disabled = true;
+                clearBtn.disabled = false;
+                break;
         }
+    }
 
-        function updateTrimUI() {
-            document.getElementById('trimLeft').style.width = (trimStart * 100) + '%';
-            document.getElementById('trimRight').style.width = ((1 - trimEnd) * 100) + '%';
+    // --- Visualizer Loop ---
+    function drawVisualizer() {
+        requestAnimationFrame(drawVisualizer);
+        if (!analyser) return;
+
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+        analyser.getByteTimeDomainData(dataArray);
+
+        const width = canvas.width / dpr;
+        const height = canvas.height / dpr;
+
+        canvasCtx.fillStyle = '#1a1a1a';
+        canvasCtx.fillRect(0, 0, width, height);
+
+        canvasCtx.lineWidth = 2;
+        
+        // Color based on state
+        if (currentState === STATES.RECORDING) canvasCtx.strokeStyle = '#f14668';
+        else if (currentState === STATES.ARMED) canvasCtx.strokeStyle = '#ffdd57';
+        else canvasCtx.strokeStyle = '#00d1b2';
+
+        canvasCtx.beginPath();
+
+        const sliceWidth = width * 1.0 / bufferLength;
+        let x = 0;
+
+        for (let i = 0; i < bufferLength; i++) {
+            const v = dataArray[i] / 128.0; // 0 to 2
+            const y = v * height / 2;
+
+            if (i === 0) canvasCtx.moveTo(x, y);
+            else canvasCtx.lineTo(x, y);
+
+            x += sliceWidth;
         }
+        canvasCtx.lineTo(width, height / 2);
+        canvasCtx.stroke();
 
-        // --- Waveform Drawing ---
-        function drawWaveform() {
-            const canvas = document.getElementById('waveform');
-            const ctx = canvas.getContext('2d');
-            
-            // Explicitly set sizes to prevent blurry rendering
-            canvas.width = trackArea.offsetWidth;
-            canvas.height = trackArea.offsetHeight;
-            
-            const data = loopBuffer.getChannelData(0);
-            const step = Math.ceil(data.length / canvas.width);
-            const amp = canvas.height / 2;
-            
-            ctx.fillStyle = '#222';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#e74c3c';
-            
-            // Draw amplitude bars
-            for(let i = 0; i < canvas.width; i++){
-                let min = 1.0; let max = -1.0;
-                for(let j = 0; j < step; j++){
-                    const val = data[(i * step) + j];
-                    if(val < min) min = val;
-                    if(val > max) max = val;
-                }
-                ctx.fillRect(i, (1 + min) * amp, 1, Math.max(1, (max - min) * amp));
-            }
-        }
-
-        // --- Recording Logic ---
-        async function handleRecordClick() {
-            initAudio();
-            if (isCountingDown) return; 
-
-            const useCountIn = document.getElementById('countInToggle').checked;
-            const btn = document.getElementById('recordBtn');
-
-            if (!isRecording && useCountIn) {
-                isCountingDown = true;
-                btn.style.background = "#e67e22"; 
-                
-                // Silent visual countdown
-                btn.innerHTML = "3..."; await new Promise(r => setTimeout(r, 1000));
-                btn.innerHTML = "2..."; await new Promise(r => setTimeout(r, 1000));
-                btn.innerHTML = "1..."; await new Promise(r => setTimeout(r, 1000));
-                
-                btn.style.background = ""; 
-                isCountingDown = false;
-            }
-
-            toggleRecord();
-        }
-
-        async function toggleRecord() {
-            const btn = document.getElementById('recordBtn');
-
-            if (!isRecording) {
-                if (isLoopPlaying) {
-                    loopSource.stop();
-                    isLoopPlaying = false;
-                }
-                
-                try {
-                    // Reset audio chunks and request Microphone
-                    audioChunks = [];
-                    activeStream = await navigator.mediaDevices.getUserMedia({ 
-                        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } 
-                    });
-                    
-                    mediaRecorder = new MediaRecorder(activeStream);
-                    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
-                    
-                    mediaRecorder.onstop = async () => {
-                        btn.innerHTML = '⏳ Processing...';
-                        
-                        // CRITICAL FOR iOS LOUDSPEAKER: Stop the microphone completely!
-                        // This forces iOS to route audio back out of the main speakerphone instead of earpiece.
-                        activeStream.getTracks().forEach(track => track.stop());
-                        activeStream = null;
-                        
-                        const audioBlob = new Blob(audioChunks);
-                        audioChunks = [];
-                        
-                        try {
-                            const arrayBuffer = await audioBlob.arrayBuffer();
-                            audioCtx.decodeAudioData(arrayBuffer, (buffer) => {
-                                loopBuffer = buffer;
-                                
-                                // Reset trims
-                                trimStart = 0.0; trimEnd = 1.0; updateTrimUI();
-                                
-                                trackArea.style.display = 'block';
-                                setTimeout(drawWaveform, 50); // Small delay to let container size calculate
-                                
-                                updateLooperUI();
-                            }, (err) => {
-                                console.error(err); alert("Failed to decode audio. Please try again."); updateLooperUI();
-                            });
-                        } catch (e) {
-                            alert("Processing error: " + e.message); updateLooperUI();
-                        }
-                    };
-
-                    mediaRecorder.start();
-                    isRecording = true;
-                    btn.innerHTML = '⏹ Stop Rec<br><span class="sub-text">Spacebar</span>';
-                    btn.classList.add('recording');
-
-                } catch (err) {
-                    alert("Microphone access is required."); console.error(err);
-                }
-            } else {
-                if(mediaRecorder && mediaRecorder.state !== 'inactive') {
-                    mediaRecorder.stop();
-                }
-                isRecording = false;
-                btn.classList.remove('recording');
-            }
-        }
-
-        function startLoopPlayback() {
-            const dur = loopBuffer.duration;
-            loopSource = audioCtx.createBufferSource();
-            loopSource.buffer = loopBuffer;
-            loopSource.loop = true;
-            
-            // Apply current trims
-            loopSource.loopStart = trimStart * dur;
-            loopSource.loopEnd = trimEnd * dur;
-            
-            loopSource.connect(audioCtx.destination);
-            // Start exactly at the trimmed starting point
-            loopSource.start(0, loopSource.loopStart);
-            
-            isLoopPlaying = true;
-            const btn = document.getElementById('playBtn');
-            btn.innerHTML = '⏸ Stop<br><span class="sub-text">Enter key</span>';
-            btn.classList.add('active-green');
-        }
-
-        function toggleLoop() {
-            initAudio();
-            if (!loopBuffer) return;
-
-            if (isLoopPlaying) {
-                if (loopSource) loopSource.stop();
-                isLoopPlaying = false;
-                const btn = document.getElementById('playBtn');
-                btn.innerHTML = '▶️ Play<br><span class="sub-text">Enter key</span>';
-                btn.classList.remove('active-green');
-            } else {
-                startLoopPlayback();
-            }
-        }
-
-        function clearLoop() {
-            if (isLoopPlaying) toggleLoop(); 
-            loopBuffer = null;
-            trackArea.style.display = 'none';
-            updateLooperUI();
-        }
-
-        function updateLooperUI() {
-            const hasLoop = loopBuffer !== null;
-            document.getElementById('playBtn').disabled = !hasLoop;
-            document.getElementById('clearBtn').disabled = !hasLoop;
-            
-            const recBtn = document.getElementById('recordBtn');
-            recBtn.innerHTML = hasLoop 
-                ? '🔴 Overwrite<br><span class="sub-text">Spacebar</span>'
-                : '🔴 Record<br><span class="sub-text">Spacebar</span>';
-            
-            if (!hasLoop) {
-                const playBtn = document.getElementById('playBtn');
-                playBtn.innerHTML = '▶️ Play<br><span class="sub-text">Enter key</span>';
-                playBtn.classList.remove('active-green');
-            }
-        }
-    </script>
+        // Draw Threshold Lines (Visual Aid)
+        const center = height / 2;
+        const threshPx = (threshold) * (height / 2); // approximate for visual scaling
+        
+        canvasCtx.strokeStyle = 'rgba(100, 100, 100, 0.5)';
+        canvasCtx.setLineDash([5, 5]);
+        canvasCtx.beginPath();
+        // Top line
+        canvasCtx.moveTo(0, center - threshPx * 255/2); // scaling for 8bit data
+        canvasCtx.lineTo(width, center - threshPx * 255/2);
+        // Bottom line
+        canvasCtx.moveTo(0, center + threshPx * 255/2);
+        canvasCtx.lineTo(width, center + threshPx * 255/2);
+        canvasCtx.stroke();
+        canvasCtx.setLineDash([]);
+    }
+</script>
 </body>
 </html>
