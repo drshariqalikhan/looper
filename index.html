@@ -6,15 +6,16 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#121212">
-    <title>Speaker Looper</title>
+    <title>Pro Trim Looper</title>
     
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
     
-    <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiTG91ZBMb29wZXIiLCJzaG9ydF9uYW1lIjoiTG9vcGVyIiwic3RhcnRfdXJsIjoiLiIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiMxMjEyMTIiLCJ0aGVtZV9jb2xvciI6IiMwMGQxYjIiLCJpY29ucyI6W3sic3JjIjoiZGF0YTppbWFnZS9zdmcreG1sO2Jhc2U2NCxQSE4yWnlCNGJXeHVjejBuaUhSMGNEb3ZMM2QzZHk1M015NXZjbWN2TWpBd01DOXpkbWNnZG1sbGQwSnZlRDBuTUEwS01EQW5JREF3SjIxcFkyeGxJRnM5SnpVd0p5QmplVHQ5SnpVd0lISjFQU2N6TXpNbklHWnBiR3c5SXpNd1pHMWlNaWN2UGp3dmMzZG5QZz09Iiwic2l6ZXMiOiIxOTJ4MTkyIiwidHlwZSI6ImltYWdlL3N2Zyt4bWwifV19">
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiUHJvIFRyaW0gTG9vcGVyIiwic2hvcnRfbmFtZSI6Ikxvb3BlciIsInN0YXJ0X3VybCI6Ii4iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29xvciI6IiMxMjEyMTIiLCJ0aGVtZV9jb2xvciI6IiMwMGQxYjIiLCJpY29ucyI6W3sic3JjIjoiZGF0YTppbWFnZS9zdmcreG1sO2Jhc2U2NCxQSE4yWnlCNGJXeHVjejBuaUhSMGNEb3ZMM2QzZHk1M015NXZjbWN2TWpBd01DOXpkbWNnZG1sbGQwSnZlRDBuTUEwS01EQW5JREF3SjIxcFkyeGxJRnM5SnpVd0p5QmplVHQ5SnpVd0lISjFQU2N6TXpNbklHWnBiR3c5SXpNd1pHMWlNaWN2UGp3dmMzZG5QZz09Iiwic2l6ZXMiOiIxOTJ4MTkyIiwidHlwZSI6ImltYWdlL3N2Zyt4bWwifV19">
 
     <style>
         :root {
-            --pedal-size: 220px;
+            --pedal-size: 200px; /* Slightly smaller to fit controls */
             --safe-bottom: env(safe-area-inset-bottom, 20px);
         }
 
@@ -35,139 +36,159 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            padding: 20px 20px calc(20px + var(--safe-bottom)) 20px;
+            padding: 10px 15px calc(10px + var(--safe-bottom)) 15px;
         }
 
+        /* Top Area: Visualizer */
         .viz-container {
+            flex: 0 0 auto;
+            margin-bottom: 10px;
+        }
+        canvas {
+            width: 100%;
+            height: 120px;
+            background: #1a1a1a;
+            border-radius: 8px;
+            border: 1px solid #333;
+        }
+
+        /* Middle Area: Controls & Pedal */
+        .controls-area {
             flex: 1;
             display: flex;
             flex-direction: column;
+            align-items: center;
             justify-content: center;
+            gap: 15px;
             position: relative;
         }
 
-        canvas {
+        /* Fine Tune Panel */
+        #tune-panel {
             width: 100%;
-            height: 180px;
-            background: #1a1a1a;
-            border-radius: 12px;
+            background: #1e1e1e;
+            padding: 10px;
+            border-radius: 8px;
             border: 1px solid #333;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+            display: none; /* Hidden until loop exists */
         }
-
-        .controls-area {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .slider-wrapper {
-            width: 100%;
-            max-width: 300px;
-            margin-bottom: 5px;
-        }
-        
-        .threshold-label {
+        .tune-row {
             display: flex;
             justify-content: space-between;
-            font-size: 0.8rem;
-            color: #888;
+            align-items: center;
             margin-bottom: 8px;
         }
+        .tune-row:last-child { margin-bottom: 0; }
+        .tune-btn {
+            background: #333;
+            border: 1px solid #555;
+            color: #fff;
+            width: 40px;
+            height: 35px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .tune-btn:active { background: #555; }
+        .tune-label { font-size: 0.8rem; color: #aaa; width: 60px; text-align: center; }
 
-        /* Large Pedal Button */
+        /* Pedal */
         #pedal-btn {
             width: var(--pedal-size);
             height: var(--pedal-size);
             border-radius: 50%;
-            border: 8px solid #2c2c2c;
+            border: 6px solid #2c2c2c;
             background: #333;
             color: #fff;
-            font-size: 1.8rem;
+            font-size: 1.6rem;
             font-weight: 800;
             text-transform: uppercase;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 2px 10px rgba(255,255,255,0.1);
-            transition: all 0.15s ease-out;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5), inset 0 2px 10px rgba(255,255,255,0.1);
+            transition: all 0.1s;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             text-align: center;
             line-height: 1.1;
-            -webkit-tap-highlight-color: transparent;
-            outline: none;
         }
-
-        #pedal-btn:active {
-            transform: scale(0.96);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.6), inset 0 0 30px rgba(0,0,0,0.4);
-        }
+        #pedal-btn:active { transform: scale(0.96); }
 
         .status-init { background: linear-gradient(145deg, #3e8ed0, #296fa8); border-color: #205e8e !important; }
         .status-idle { background: linear-gradient(145deg, #4a4a4a, #363636); border-color: #2b2b2b !important; color: #aaa !important; }
         .status-armed { background: linear-gradient(145deg, #ffdd57, #dcb828); border-color: #bfa026 !important; color: #5c4b00 !important; animation: pulse-yellow 1.5s infinite; }
         .status-recording { background: linear-gradient(145deg, #f14668, #c03853); border-color: #a31c36 !important; animation: pulse-red 1s infinite; }
-        .status-playing { background: linear-gradient(145deg, #48c774, #359f59); border-color: #297c45 !important; box-shadow: 0 0 35px rgba(72, 199, 116, 0.4); }
-        .status-wait { background: #333; color: #fff; border-color: #555; }
+        .status-playing { background: linear-gradient(145deg, #48c774, #359f59); border-color: #297c45 !important; }
+        .status-wait { background: #222; color: #fff; border-color: #444; }
 
         @keyframes pulse-yellow { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
         @keyframes pulse-red { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
 
+        /* Slider */
+        .slider-wrapper { width: 100%; max-width: 280px; }
+        .threshold-label { display: flex; justify-content: space-between; font-size: 0.75rem; color: #888; margin-bottom: 4px; }
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%; background: #00d1b2; margin-top: -8px; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; background: #444; border-radius: 2px; }
+
+        /* Bottom Controls */
         .secondary-controls {
+            flex: 0 0 auto;
             display: flex;
             width: 100%;
-            max-width: 320px;
-            gap: 15px;
+            gap: 10px;
         }
-        
-        .secondary-controls button {
-            flex: 1;
-            height: 50px;
-            font-weight: 600;
-            border-radius: 8px;
-        }
-
-        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%; background: #00d1b2; margin-top: -10px; box-shadow: 0 2px 6px rgba(0,0,0,0.4); }
-        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; background: #444; border-radius: 2px; }
-        
-        #test-btn-container { width: 100%; max-width: 300px; margin-bottom: 10px; }
+        .secondary-controls button { flex: 1; height: 45px; border-radius: 8px; font-weight: 600; }
     </style>
 </head>
 <body>
 
 <div class="main-container">
+    
     <div class="viz-container">
-        <h1 class="title is-5 has-text-centered has-text-grey-light mb-4">Loud Speaker Looper</h1>
+        <h1 class="title is-6 has-text-centered has-text-grey-light mb-2">Pro Trim Looper</h1>
         <canvas id="visualizer"></canvas>
-        <p id="status-message" class="has-text-centered mt-3 has-text-grey">Tap Power to Initialize</p>
+        <p id="status-message" class="has-text-centered mt-2 has-text-grey is-size-7">Tap Power to Initialize</p>
+    </div>
+
+    <!-- Fine Tune Controls (Visible only when loop exists) -->
+    <div id="tune-panel">
+        <div class="tune-row">
+            <span class="has-text-grey is-size-7">Start Point</span>
+            <div>
+                <button class="tune-btn" onclick="nudgeStart(-0.05)">-</button>
+                <span class="tune-label">50ms</span>
+                <button class="tune-btn" onclick="nudgeStart(0.05)">+</button>
+            </div>
+        </div>
+        <div class="tune-row">
+            <span class="has-text-grey is-size-7">Loop Length</span>
+            <div>
+                <button class="tune-btn" onclick="nudgeEnd(-0.05)">-</button>
+                <span class="tune-label">50ms</span>
+                <button class="tune-btn" onclick="nudgeEnd(0.05)">+</button>
+            </div>
+        </div>
     </div>
 
     <div class="controls-area">
-        
-        <!-- Test Button -->
-        <div id="test-btn-container">
-            <button id="test-speaker-btn" class="button is-small is-info is-outlined is-fullwidth" style="border-radius: 20px;">
-                Sound Check: Test Speaker
-            </button>
-        </div>
-
         <div class="slider-wrapper">
             <div class="threshold-label">
-                <span>Trigger Sensitivity</span>
+                <span>Auto-Start Sensitivity</span>
                 <span id="thresh-val">50</span>
             </div>
             <input id="threshold-slider" type="range" min="1" max="100" value="50">
         </div>
 
         <button id="pedal-btn" class="status-init">POWER<br>ON</button>
-
-        <div class="secondary-controls">
-            <button id="stop-btn" class="button is-warning is-light" disabled>Stop</button>
-            <button id="clear-btn" class="button is-danger is-light" disabled>Clear</button>
-        </div>
+        
+        <button id="test-btn" class="button is-small is-rounded is-dark is-outlined mt-2" style="width: 150px;">Test Speaker</button>
     </div>
+
+    <div class="secondary-controls">
+        <button id="stop-btn" class="button is-warning is-light" disabled>Stop</button>
+        <button id="clear-btn" class="button is-danger is-light" disabled>Clear</button>
+    </div>
+
 </div>
 
 <script>
@@ -175,7 +196,7 @@
         window.addEventListener('load', () => {
             const swCode = `self.addEventListener('install',e=>self.skipWaiting());self.addEventListener('activate',e=>self.clients.claim());self.addEventListener('fetch',e=>{});`;
             const blob = new Blob([swCode], {type: 'application/javascript'});
-            navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(e=>console.log(e));
+            navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(console.error);
         });
     }
 
@@ -188,14 +209,24 @@
     let analyser = null;
     let processor = null;
     let sourceNode = null;
+    let masterGain = null;
+
+    // Buffer Logic
     let loopBuffer = null;
     let recordedChunks = [];
+    let preRollBuffer = []; // Stores the last 2 chunks BEFORE trigger
     let threshold = 0.05; 
+    
+    // Nudge Logic
+    let currentLoopStart = 0;
+    let currentLoopEnd = 0;
 
+    // UI Elements
     const pedalBtn = document.getElementById('pedal-btn');
     const stopBtn = document.getElementById('stop-btn');
     const clearBtn = document.getElementById('clear-btn');
-    const testBtn = document.getElementById('test-speaker-btn');
+    const testBtn = document.getElementById('test-btn');
+    const tunePanel = document.getElementById('tune-panel');
     const statusMsg = document.getElementById('status-message');
     const canvas = document.getElementById('visualizer');
     const ctx = canvas.getContext('2d');
@@ -207,43 +238,31 @@
     canvas.height = canvas.offsetHeight * dpr;
     ctx.scale(dpr, dpr);
 
-    slider.addEventListener('input', updateThreshold);
-    updateThreshold(); 
-
-    function updateThreshold() {
+    // --- SLIDER ---
+    slider.addEventListener('input', () => {
         const val = parseInt(slider.value);
         threshVal.innerText = val;
         threshold = val / 1000; 
-    }
-
-    // --- TEST BUTTON LOGIC ---
-    testBtn.addEventListener('click', async () => {
-        if (!audioCtx) {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        if (audioCtx.state === 'suspended') await audioCtx.resume();
-        
-        // Simple Oscillator Beep
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        
-        osc.type = 'sine';
-        osc.frequency.value = 440; // A4
-        gain.gain.value = 0.5;
-        
-        osc.start();
-        statusMsg.innerText = "Playing Test Tone...";
-        setTimeout(() => {
-            osc.stop();
-            statusMsg.innerText = "Did you hear it?";
-        }, 1000);
     });
-    // -------------------------
+    // Init threshold
+    threshold = 50 / 1000;
 
+    // --- TEST SPEAKER ---
+    testBtn.addEventListener('click', async () => {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') await audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        osc.connect(g); g.connect(audioCtx.destination);
+        osc.frequency.value = 500;
+        g.gain.value = 0.5;
+        osc.start();
+        setTimeout(() => osc.stop(), 500);
+    });
+
+    // --- MAIN PEDAL ---
     pedalBtn.addEventListener('click', async () => {
-        if (state === STATES.INIT) await initContextAndMic();
+        if (state === STATES.INIT) await initSystem();
         else if (state === STATES.IDLE) armLooper();
         else if (state === STATES.ARMED) cancelArming();
         else if (state === STATES.RECORDING) finishRecording();
@@ -254,90 +273,90 @@
     stopBtn.addEventListener('click', stopPlayback);
     clearBtn.addEventListener('click', clearLoop);
 
-    async function initContextAndMic() {
+    async function initSystem() {
         try {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            if (audioCtx.state === 'suspended') await audioCtx.resume();
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'interactive' });
             await startMic();
-        } catch (e) {
-            alert("Microphone Access Required");
-        }
+        } catch (e) { alert("Mic Access Needed"); }
     }
 
     async function startMic() {
-        // If we are already running, don't restart
         if (micStream && micStream.active && state !== STATES.PLAYING) return;
+        
+        micStream = await navigator.mediaDevices.getUserMedia({
+            audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+        });
 
-        try {
-            micStream = await navigator.mediaDevices.getUserMedia({
-                audio: { 
-                    echoCancellation: false, 
-                    noiseSuppression: false, 
-                    autoGainControl: false 
+        const micSource = audioCtx.createMediaStreamSource(micStream);
+        inputGain = audioCtx.createGain();
+        inputGain.gain.value = 4.0; // High Input Gain for clear detection
+        
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 2048;
+        
+        processor = audioCtx.createScriptProcessor(4096, 1, 1);
+        
+        micSource.connect(inputGain);
+        inputGain.connect(analyser);
+        analyser.connect(processor);
+        
+        // Mute monitoring
+        const mute = audioCtx.createGain();
+        mute.gain.value = 0;
+        processor.connect(mute);
+        mute.connect(audioCtx.destination);
+
+        processor.onaudioprocess = processAudio;
+        
+        drawViz();
+        updateUI(STATES.IDLE);
+    }
+
+    function processAudio(e) {
+        if (state !== STATES.ARMED && state !== STATES.RECORDING) return;
+        
+        const input = e.inputBuffer.getChannelData(0);
+        // Make a copy
+        const chunk = new Float32Array(input);
+
+        if (state === STATES.ARMED) {
+            // 1. Maintain Pre-Roll (Keep last 2 chunks ~170ms)
+            preRollBuffer.push(chunk);
+            if (preRollBuffer.length > 2) preRollBuffer.shift();
+
+            // 2. Scan for Threshold
+            let triggerIdx = -1;
+            for (let i = 0; i < chunk.length; i++) {
+                if (Math.abs(chunk[i]) > threshold) {
+                    triggerIdx = i;
+                    break;
                 }
-            });
+            }
 
-            const micSource = audioCtx.createMediaStreamSource(micStream);
-            
-            // 3.5x Gain Boost for Input
-            inputGain = audioCtx.createGain();
-            inputGain.gain.value = 3.5; 
-
-            analyser = audioCtx.createAnalyser();
-            analyser.fftSize = 2048;
-            processor = audioCtx.createScriptProcessor(4096, 1, 1);
-            
-            micSource.connect(inputGain);
-            inputGain.connect(analyser);
-            analyser.connect(processor);
-            
-            const mute = audioCtx.createGain();
-            mute.gain.value = 0;
-            processor.connect(mute);
-            mute.connect(audioCtx.destination);
-
-            processor.onaudioprocess = (e) => {
-                if (state !== STATES.ARMED && state !== STATES.RECORDING) return;
+            if (triggerIdx !== -1) {
+                // TRIGGERED!
+                state = STATES.RECORDING;
                 
-                const input = e.inputBuffer.getChannelData(0);
-
-                if (state === STATES.ARMED) {
-                    let idx = -1;
-                    for (let i=0; i<input.length; i++) {
-                        if (Math.abs(input[i]) > threshold) {
-                            idx = i;
-                            break;
-                        }
-                    }
-                    
-                    if (idx !== -1) {
-                        recordedChunks.push(new Float32Array(input.slice(idx)));
-                        state = STATES.RECORDING;
-                        requestAnimationFrame(() => updateUI(STATES.RECORDING));
-                    }
-                } else {
-                    recordedChunks.push(new Float32Array(input));
-                }
-            };
-
-            drawViz();
-            updateUI(STATES.IDLE);
-        } catch(err) {
-            console.error(err);
-            statusMsg.innerText = "Mic Error: " + err.message;
+                // Save Pre-Roll data first (The attack)
+                recordedChunks = [...preRollBuffer]; 
+                
+                // Add current chunk
+                recordedChunks.push(chunk);
+                
+                requestAnimationFrame(() => updateUI(STATES.RECORDING));
+            }
+        } 
+        else if (state === STATES.RECORDING) {
+            recordedChunks.push(chunk);
         }
     }
 
     async function armLooper() {
         if (audioCtx.state === 'suspended') await audioCtx.resume();
-        
-        if (!micStream || !micStream.active) {
-            await startMic();
-        }
+        if (!micStream || !micStream.active) await startMic();
         
         recordedChunks = [];
+        preRollBuffer = [];
         updateUI(STATES.ARMED);
     }
 
@@ -347,35 +366,51 @@
     }
 
     function finishRecording() {
-        if (recordedChunks.length === 0) {
-            updateUI(STATES.IDLE);
-            return;
-        }
+        if (recordedChunks.length === 0) { updateUI(STATES.IDLE); return; }
 
+        // 1. Flatten Buffer
         let len = 0;
-        for(let c of recordedChunks) len += c.length;
-        const buf = new Float32Array(len);
+        for (let c of recordedChunks) len += c.length;
+        const rawBuffer = new Float32Array(len);
         let offset = 0;
-        for(let c of recordedChunks) {
-            buf.set(c, offset);
+        for (let c of recordedChunks) {
+            rawBuffer.set(c, offset);
             offset += c.length;
         }
 
-        loopBuffer = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
-        loopBuffer.getChannelData(0).set(buf);
+        // 2. INTELLIGENT TRIM (HEAD)
+        // Scan the flattened buffer to find the REAL start
+        // (Since we added Pre-Roll, silence is at the start)
+        let realStart = 0;
+        for (let i = 0; i < rawBuffer.length; i++) {
+            if (Math.abs(rawBuffer[i]) > threshold) {
+                // Found it. Backtrack 10ms (approx 480 samples) for safety/breath
+                realStart = Math.max(0, i - 1000); 
+                break;
+            }
+        }
 
-        // Transition to play loop
+        // 3. Create Final AudioBuffer (Trimmed Head, Manual Tail)
+        const trimLen = rawBuffer.length - realStart;
+        const trimmedData = rawBuffer.slice(realStart);
+        
+        loopBuffer = audioCtx.createBuffer(1, trimLen, audioCtx.sampleRate);
+        loopBuffer.getChannelData(0).set(trimmedData);
+
+        // Reset Loop Points
+        currentLoopStart = 0;
+        currentLoopEnd = loopBuffer.duration;
+
         playLoop();
     }
 
     function playLoop() {
         if (!loopBuffer) return;
-
-        // --- SPEAKER ROUTING HACK ---
-        updateUI(STATES.WAIT); // Show visual feedback that we are switching
+        
+        // SWITCH TO SPEAKER
+        updateUI(STATES.WAIT);
         statusMsg.innerText = "Switching to Speaker...";
-
-        // 1. Kill Mic (Forces iOS to look for a new route)
+        
         if (micStream) {
             micStream.getTracks().forEach(t => t.stop());
             micStream = null;
@@ -384,22 +419,24 @@
         if (analyser) { analyser.disconnect(); analyser = null; }
         if (sourceNode) { try{sourceNode.stop()}catch(e){}; sourceNode.disconnect(); }
 
-        // 2. WAIT for iOS to switch from Earpiece -> Speaker
         setTimeout(() => {
             sourceNode = audioCtx.createBufferSource();
             sourceNode.buffer = loopBuffer;
             sourceNode.loop = true;
             
-            // 3. Add Output Gain (Make it loud!)
-            const outGain = audioCtx.createGain();
-            outGain.gain.value = 1.0; // Max unity gain
+            // Apply Nudge
+            sourceNode.loopStart = currentLoopStart;
+            sourceNode.loopEnd = currentLoopEnd;
 
-            sourceNode.connect(outGain);
-            outGain.connect(audioCtx.destination);
+            masterGain = audioCtx.createGain();
+            masterGain.gain.value = 1.0; 
+
+            sourceNode.connect(masterGain);
+            masterGain.connect(audioCtx.destination);
             
-            sourceNode.start(0);
+            sourceNode.start(0, currentLoopStart);
             updateUI(STATES.PLAYING);
-        }, 500); // 500ms delay is usually the sweet spot for iPhone
+        }, 500); 
     }
 
     function stopPlayback() {
@@ -410,25 +447,66 @@
     function clearLoop() {
         stopPlayback();
         loopBuffer = null;
+        recordedChunks = [];
         updateUI(STATES.IDLE);
     }
 
+    // --- NUDGE FUNCTIONS ---
+    window.nudgeStart = (amount) => {
+        if (!loopBuffer) return;
+        let newStart = currentLoopStart + amount;
+        if (newStart < 0) newStart = 0;
+        if (newStart >= currentLoopEnd - 0.1) return; // Prevent crossing
+
+        currentLoopStart = newStart;
+        restartSource();
+    };
+
+    window.nudgeEnd = (amount) => {
+        if (!loopBuffer) return;
+        let newEnd = currentLoopEnd + amount;
+        if (newEnd > loopBuffer.duration) newEnd = loopBuffer.duration;
+        if (newEnd <= currentLoopStart + 0.1) return;
+
+        currentLoopEnd = newEnd;
+        if (sourceNode) sourceNode.loopEnd = currentLoopEnd;
+    };
+
+    function restartSource() {
+        if (state === STATES.PLAYING && sourceNode) {
+            // Simple restart to apply new loopStart immediately
+            sourceNode.stop();
+            sourceNode.disconnect();
+            
+            sourceNode = audioCtx.createBufferSource();
+            sourceNode.buffer = loopBuffer;
+            sourceNode.loop = true;
+            sourceNode.loopStart = currentLoopStart;
+            sourceNode.loopEnd = currentLoopEnd;
+            sourceNode.connect(masterGain);
+            masterGain.connect(audioCtx.destination);
+            sourceNode.start(0, currentLoopStart);
+        }
+    }
+
+    // --- UI UPDATES ---
     function updateUI(newState) {
         state = newState;
         pedalBtn.className = '';
         stopBtn.disabled = true;
         clearBtn.disabled = true;
+        tunePanel.style.display = 'none';
 
         switch(state) {
             case STATES.IDLE:
                 pedalBtn.classList.add('status-idle');
                 pedalBtn.innerHTML = "TAP TO<br>ARM";
-                statusMsg.innerText = "Ready. Tap to Arm.";
+                statusMsg.innerText = "Ready.";
                 break;
             case STATES.ARMED:
                 pedalBtn.classList.add('status-armed');
                 pedalBtn.innerHTML = "WAITING...";
-                statusMsg.innerText = "Make sound to start!";
+                statusMsg.innerText = "Play to start!";
                 break;
             case STATES.RECORDING:
                 pedalBtn.classList.add('status-recording');
@@ -442,9 +520,10 @@
             case STATES.PLAYING:
                 pedalBtn.classList.add('status-playing');
                 pedalBtn.innerHTML = "STOP";
-                statusMsg.innerText = "Playing Loop (Speaker)";
+                statusMsg.innerText = "Playing Loop";
                 stopBtn.disabled = false;
                 clearBtn.disabled = false;
+                tunePanel.style.display = 'block';
                 break;
             case STATES.STOPPED:
                 pedalBtn.classList.add('status-idle');
@@ -452,6 +531,7 @@
                 statusMsg.innerText = "Stopped.";
                 stopBtn.disabled = true;
                 clearBtn.disabled = false;
+                tunePanel.style.display = 'block';
                 break;
         }
     }
@@ -477,8 +557,7 @@
 
         ctx.fillStyle = '#1a1a1a';
         ctx.fillRect(0, 0, w, h);
-
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 2;
         ctx.strokeStyle = (state === STATES.RECORDING) ? '#f14668' : (state === STATES.ARMED ? '#ffdd57' : '#00d1b2');
 
         ctx.beginPath();
@@ -495,8 +574,7 @@
         ctx.stroke();
 
         const cy = h / 2;
-        const thPx = threshold * 400; 
-        
+        const thPx = threshold * 300; 
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
         ctx.setLineDash([5, 5]);
         ctx.beginPath();
