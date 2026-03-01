@@ -6,7 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#121212">
-    <title>Loud Speaker Looper</title>
+    <title>Speaker Looper</title>
     
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
     
@@ -14,7 +14,7 @@
 
     <style>
         :root {
-            --pedal-size: 240px;
+            --pedal-size: 220px;
             --safe-bottom: env(safe-area-inset-bottom, 20px);
         }
 
@@ -46,10 +46,9 @@
             position: relative;
         }
 
-        /* Canvas is taller now to show waveforms better */
         canvas {
             width: 100%;
-            height: 200px; 
+            height: 180px;
             background: #1a1a1a;
             border-radius: 12px;
             border: 1px solid #333;
@@ -60,7 +59,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 20px;
+            gap: 15px;
         }
 
         .slider-wrapper {
@@ -107,22 +106,10 @@
 
         .status-init { background: linear-gradient(145deg, #3e8ed0, #296fa8); border-color: #205e8e !important; }
         .status-idle { background: linear-gradient(145deg, #4a4a4a, #363636); border-color: #2b2b2b !important; color: #aaa !important; }
-        .status-armed { 
-            background: linear-gradient(145deg, #ffdd57, #dcb828); 
-            border-color: #bfa026 !important; 
-            color: #5c4b00 !important; 
-            animation: pulse-yellow 1.5s infinite;
-        }
-        .status-recording { 
-            background: linear-gradient(145deg, #f14668, #c03853); 
-            border-color: #a31c36 !important; 
-            animation: pulse-red 1s infinite;
-        }
-        .status-playing { 
-            background: linear-gradient(145deg, #48c774, #359f59); 
-            border-color: #297c45 !important; 
-            box-shadow: 0 0 35px rgba(72, 199, 116, 0.4);
-        }
+        .status-armed { background: linear-gradient(145deg, #ffdd57, #dcb828); border-color: #bfa026 !important; color: #5c4b00 !important; animation: pulse-yellow 1.5s infinite; }
+        .status-recording { background: linear-gradient(145deg, #f14668, #c03853); border-color: #a31c36 !important; animation: pulse-red 1s infinite; }
+        .status-playing { background: linear-gradient(145deg, #48c774, #359f59); border-color: #297c45 !important; box-shadow: 0 0 35px rgba(72, 199, 116, 0.4); }
+        .status-wait { background: #333; color: #fff; border-color: #555; }
 
         @keyframes pulse-yellow { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
         @keyframes pulse-red { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
@@ -141,26 +128,11 @@
             border-radius: 8px;
         }
 
-        input[type=range] {
-            -webkit-appearance: none;
-            width: 100%;
-            background: transparent;
-        }
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            height: 24px;
-            width: 24px;
-            border-radius: 50%;
-            background: #00d1b2;
-            margin-top: -10px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-        }
-        input[type=range]::-webkit-slider-runnable-track {
-            width: 100%;
-            height: 4px;
-            background: #444;
-            border-radius: 2px;
-        }
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%; background: #00d1b2; margin-top: -10px; box-shadow: 0 2px 6px rgba(0,0,0,0.4); }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; background: #444; border-radius: 2px; }
+        
+        #test-btn-container { width: 100%; max-width: 300px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -173,6 +145,14 @@
     </div>
 
     <div class="controls-area">
+        
+        <!-- Test Button -->
+        <div id="test-btn-container">
+            <button id="test-speaker-btn" class="button is-small is-info is-outlined is-fullwidth" style="border-radius: 20px;">
+                Sound Check: Test Speaker
+            </button>
+        </div>
+
         <div class="slider-wrapper">
             <div class="threshold-label">
                 <span>Trigger Sensitivity</span>
@@ -199,12 +179,12 @@
         });
     }
 
-    const STATES = { INIT:'INIT', IDLE:'IDLE', ARMED:'ARMED', RECORDING:'RECORDING', PLAYING:'PLAYING', STOPPED:'STOPPED' };
+    const STATES = { INIT:'INIT', IDLE:'IDLE', ARMED:'ARMED', RECORDING:'RECORDING', PLAYING:'PLAYING', STOPPED:'STOPPED', WAIT:'WAIT' };
 
     let state = STATES.INIT;
     let audioCtx = null;
     let micStream = null;
-    let inputGain = null; // New Gain Node for volume boost
+    let inputGain = null;
     let analyser = null;
     let processor = null;
     let sourceNode = null;
@@ -215,6 +195,7 @@
     const pedalBtn = document.getElementById('pedal-btn');
     const stopBtn = document.getElementById('stop-btn');
     const clearBtn = document.getElementById('clear-btn');
+    const testBtn = document.getElementById('test-speaker-btn');
     const statusMsg = document.getElementById('status-message');
     const canvas = document.getElementById('visualizer');
     const ctx = canvas.getContext('2d');
@@ -232,10 +213,34 @@
     function updateThreshold() {
         const val = parseInt(slider.value);
         threshVal.innerText = val;
-        // Higher sensitivity = Lower threshold
-        // Map 1-100 to approx 0.005 - 0.2
         threshold = val / 1000; 
     }
+
+    // --- TEST BUTTON LOGIC ---
+    testBtn.addEventListener('click', async () => {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') await audioCtx.resume();
+        
+        // Simple Oscillator Beep
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        osc.type = 'sine';
+        osc.frequency.value = 440; // A4
+        gain.gain.value = 0.5;
+        
+        osc.start();
+        statusMsg.innerText = "Playing Test Tone...";
+        setTimeout(() => {
+            osc.stop();
+            statusMsg.innerText = "Did you hear it?";
+        }, 1000);
+    });
+    // -------------------------
 
     pedalBtn.addEventListener('click', async () => {
         if (state === STATES.INIT) await initContextAndMic();
@@ -252,80 +257,82 @@
     async function initContextAndMic() {
         try {
             if (!audioCtx) {
-                const AudioContext = window.AudioContext || window.webkitAudioContext;
-                audioCtx = new AudioContext({ latencyHint: 'interactive' });
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             }
             if (audioCtx.state === 'suspended') await audioCtx.resume();
             await startMic();
         } catch (e) {
             alert("Microphone Access Required");
-            console.error(e);
         }
     }
 
     async function startMic() {
-        if (micStream && micStream.active) return; // Already running
+        // If we are already running, don't restart
+        if (micStream && micStream.active && state !== STATES.PLAYING) return;
 
-        micStream = await navigator.mediaDevices.getUserMedia({
-            audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
-        });
+        try {
+            micStream = await navigator.mediaDevices.getUserMedia({
+                audio: { 
+                    echoCancellation: false, 
+                    noiseSuppression: false, 
+                    autoGainControl: false 
+                }
+            });
 
-        const micSource = audioCtx.createMediaStreamSource(micStream);
-        
-        // 1. ADD INPUT GAIN (Boosts volume 3.5x for better detection & playback volume)
-        inputGain = audioCtx.createGain();
-        inputGain.gain.value = 3.5; 
-
-        // 2. Setup Analyser & Processor
-        analyser = audioCtx.createAnalyser();
-        analyser.fftSize = 2048;
-        processor = audioCtx.createScriptProcessor(4096, 1, 1);
-        
-        // 3. Chain: Mic -> Gain -> Analyser -> Processor -> Mute -> Out
-        micSource.connect(inputGain);
-        inputGain.connect(analyser);
-        analyser.connect(processor);
-        
-        // Mute monitoring to avoid feedback
-        const mute = audioCtx.createGain();
-        mute.gain.value = 0;
-        processor.connect(mute);
-        mute.connect(audioCtx.destination);
-
-        processor.onaudioprocess = (e) => {
-            if (state !== STATES.ARMED && state !== STATES.RECORDING) return;
+            const micSource = audioCtx.createMediaStreamSource(micStream);
             
-            const input = e.inputBuffer.getChannelData(0);
+            // 3.5x Gain Boost for Input
+            inputGain = audioCtx.createGain();
+            inputGain.gain.value = 3.5; 
 
-            if (state === STATES.ARMED) {
-                let idx = -1;
-                // Threshold logic applied to BOOSTED signal
-                for (let i=0; i<input.length; i++) {
-                    if (Math.abs(input[i]) > threshold) {
-                        idx = i;
-                        break;
-                    }
-                }
+            analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 2048;
+            processor = audioCtx.createScriptProcessor(4096, 1, 1);
+            
+            micSource.connect(inputGain);
+            inputGain.connect(analyser);
+            analyser.connect(processor);
+            
+            const mute = audioCtx.createGain();
+            mute.gain.value = 0;
+            processor.connect(mute);
+            mute.connect(audioCtx.destination);
+
+            processor.onaudioprocess = (e) => {
+                if (state !== STATES.ARMED && state !== STATES.RECORDING) return;
                 
-                if (idx !== -1) {
-                    recordedChunks.push(new Float32Array(input.slice(idx)));
-                    state = STATES.RECORDING;
-                    requestAnimationFrame(() => updateUI(STATES.RECORDING));
-                }
-            } else {
-                recordedChunks.push(new Float32Array(input));
-            }
-        };
+                const input = e.inputBuffer.getChannelData(0);
 
-        drawViz();
-        updateUI(STATES.IDLE);
+                if (state === STATES.ARMED) {
+                    let idx = -1;
+                    for (let i=0; i<input.length; i++) {
+                        if (Math.abs(input[i]) > threshold) {
+                            idx = i;
+                            break;
+                        }
+                    }
+                    
+                    if (idx !== -1) {
+                        recordedChunks.push(new Float32Array(input.slice(idx)));
+                        state = STATES.RECORDING;
+                        requestAnimationFrame(() => updateUI(STATES.RECORDING));
+                    }
+                } else {
+                    recordedChunks.push(new Float32Array(input));
+                }
+            };
+
+            drawViz();
+            updateUI(STATES.IDLE);
+        } catch(err) {
+            console.error(err);
+            statusMsg.innerText = "Mic Error: " + err.message;
+        }
     }
 
     async function armLooper() {
-        // Resume context in case it was suspended
         if (audioCtx.state === 'suspended') await audioCtx.resume();
         
-        // Restart Mic if it was killed for speaker playback
         if (!micStream || !micStream.active) {
             await startMic();
         }
@@ -345,7 +352,6 @@
             return;
         }
 
-        // Flatten buffer
         let len = 0;
         for(let c of recordedChunks) len += c.length;
         const buf = new Float32Array(len);
@@ -358,33 +364,42 @@
         loopBuffer = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
         loopBuffer.getChannelData(0).set(buf);
 
+        // Transition to play loop
         playLoop();
     }
 
     function playLoop() {
         if (!loopBuffer) return;
 
-        // *** SPEAKER MODE FIX ***
-        // 1. Kill the microphone stream immediately. This tells iOS "Call ended, switch to media speaker".
+        // --- SPEAKER ROUTING HACK ---
+        updateUI(STATES.WAIT); // Show visual feedback that we are switching
+        statusMsg.innerText = "Switching to Speaker...";
+
+        // 1. Kill Mic (Forces iOS to look for a new route)
         if (micStream) {
             micStream.getTracks().forEach(t => t.stop());
             micStream = null;
         }
-        // 2. Disconnect processor to save CPU
         if (processor) { processor.disconnect(); processor = null; }
         if (analyser) { analyser.disconnect(); analyser = null; }
-
-        // 3. Stop previous source
         if (sourceNode) { try{sourceNode.stop()}catch(e){}; sourceNode.disconnect(); }
 
-        // 4. Create and start source
-        sourceNode = audioCtx.createBufferSource();
-        sourceNode.buffer = loopBuffer;
-        sourceNode.loop = true;
-        sourceNode.connect(audioCtx.destination);
-        sourceNode.start(0);
+        // 2. WAIT for iOS to switch from Earpiece -> Speaker
+        setTimeout(() => {
+            sourceNode = audioCtx.createBufferSource();
+            sourceNode.buffer = loopBuffer;
+            sourceNode.loop = true;
+            
+            // 3. Add Output Gain (Make it loud!)
+            const outGain = audioCtx.createGain();
+            outGain.gain.value = 1.0; // Max unity gain
 
-        updateUI(STATES.PLAYING);
+            sourceNode.connect(outGain);
+            outGain.connect(audioCtx.destination);
+            
+            sourceNode.start(0);
+            updateUI(STATES.PLAYING);
+        }, 500); // 500ms delay is usually the sweet spot for iPhone
     }
 
     function stopPlayback() {
@@ -420,6 +435,10 @@
                 pedalBtn.innerHTML = "TAP TO<br>LOOP";
                 statusMsg.innerText = "Recording...";
                 break;
+            case STATES.WAIT:
+                pedalBtn.classList.add('status-wait');
+                pedalBtn.innerHTML = "...";
+                break;
             case STATES.PLAYING:
                 pedalBtn.classList.add('status-playing');
                 pedalBtn.innerHTML = "STOP";
@@ -438,7 +457,7 @@
     }
 
     function drawViz() {
-        if(state === STATES.PLAYING || state === STATES.STOPPED) {
+        if(state === STATES.PLAYING || state === STATES.STOPPED || state === STATES.WAIT) {
              if(!micStream) {
                  ctx.fillStyle = '#1a1a1a';
                  ctx.fillRect(0,0, canvas.width/dpr, canvas.height/dpr);
@@ -459,7 +478,7 @@
         ctx.fillStyle = '#1a1a1a';
         ctx.fillRect(0, 0, w, h);
 
-        ctx.lineWidth = 3; // Thicker line
+        ctx.lineWidth = 3;
         ctx.strokeStyle = (state === STATES.RECORDING) ? '#f14668' : (state === STATES.ARMED ? '#ffdd57' : '#00d1b2');
 
         ctx.beginPath();
@@ -475,9 +494,7 @@
         }
         ctx.stroke();
 
-        // Draw Threshold Lines
         const cy = h / 2;
-        // Visual scale adjustment for the boosted signal
         const thPx = threshold * 400; 
         
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
