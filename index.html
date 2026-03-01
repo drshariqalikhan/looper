@@ -6,11 +6,11 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#121212">
-    <title>Chord Sequence Looper</title>
+    <title>Adaptive Looper</title>
     
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
     
-    <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiU2VxdWVuY2UgTG9vcGVyIiwic2hvcnRfbmFtZSI6Ikxvb3BlciIsInN0YXJ0X3VybCI6Ii4iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29xvciI6IiMxMjEyMTIiLCJ0aGVtZV9jb2xvciI6IiMwMGQxYjIiLCJpY29ucyI6W3sic3JjIjoiZGF0YTppbWFnZS9zdmcreG1sO2Jhc2U2NCxQSE4yWnlCNGJXeHVjejBuaUhSMGNEb3ZMM2QzZHk1M015NXZjbWN2TWpBd01DOXpkbWNnZG1sbGQwSnZlRDBuTUEwS01EQW5JREF3SjIxcFkyeGxJRnM5SnpVd0p5QmplVHQ5SnpVd0lISjFQU2N6TXpNbklHWnBiR3c5SXpNd1pHMWlNaWN2UGp3dmMzZG5QZz09Iiwic2l6ZXMiOiIxOTJ4MTkyIiwidHlwZSI6ImltYWdlL3N2Zyt4bWwifV19">
+    <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiQWRhcHRpdmUgTG9vcGVyIiwic2hvcnRfbmFtZSI6Ikxvb3BlciIsInN0YXJ0X3VybCI6Ii4iLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29xvciI6IiMxMjEyMTIiLCJ0aGVtZV9jb2xvciI6IiMwMGQxYjIiLCJpY29ucyI6W3sic3JjIjoiZGF0YTppbWFnZS9zdmcreG1sO2Jhc2U2NCxQSE4yWnlCNGJXeHVjejBuaUhSMGNEb3ZMM2QzZHk1M015NXZjbWN2TWpBd01DOXpkbWNnZG1sbGQwSnZlRDBuTUEwS01EQW5JREF3SjIxcFkyeGxJRnM5SnpVd0p5QmplVHQ5SnpVd0lISjFQU2N6TXpNbklHWnBiR3c5SXpNd1pHMWlNaWN2UGp3dmMzZG5QZz09Iiwic2l6ZXMiOiIxOTJ4MTkyIiwidHlwZSI6ImltYWdlL3N2Zyt4bWwifV19">
 
     <style>
         :root {
@@ -80,7 +80,7 @@
             color: #888;
             background: #2b2b2b;
             position: relative;
-            min-width: 5px; /* Ensure tiny blocks have size */
+            min-width: 5px;
         }
         
         .seq-num { font-size: 1.4rem; font-weight: 800; line-height: 1; }
@@ -183,11 +183,10 @@
 <div class="main-container">
     
     <div class="viz-container">
-        <h1 class="title is-6 has-text-centered has-text-grey-light mb-1">Chord Sequence Looper</h1>
+        <h1 class="title is-6 has-text-centered has-text-grey-light mb-1">Adaptive Looper</h1>
         
         <canvas id="visualizer"></canvas>
         
-        <!-- SEQUENCE WINDOW -->
         <div id="sequence-strip">
             <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#555; font-size:0.8rem;">
                 Sequence Analysis (Waiting for Loop)
@@ -337,7 +336,7 @@
 
         const micSource = audioCtx.createMediaStreamSource(micStream);
         inputGain = audioCtx.createGain();
-        inputGain.gain.value = 4.0; 
+        inputGain.gain.value = 4.0; // High Input Gain
         
         analyser = audioCtx.createAnalyser();
         analyser.fftSize = 2048;
@@ -434,85 +433,93 @@
         loopStart = adjustedStart / audioCtx.sampleRate;
         loopEnd = loopBuffer.duration;
 
-        // Perform Analysis on the full buffer
         analyzeSequence(loopBuffer.getChannelData(0), audioCtx.sampleRate);
 
         playLoop();
     }
 
-    // --- ENHANCED SEQUENCE ANALYZER (No AI) ---
+    // --- ADAPTIVE NORMALIZED ANALYZER ---
     function analyzeSequence(pcmData, sampleRate) {
-        // 1. Chunking
-        // Using 250ms chunks to stabilize chord detection
-        const chunkDuration = 0.25; 
+        
+        // 1. Calculate Peak Volume to Normalize
+        let peakAmp = 0;
+        for(let i=0; i<pcmData.length; i+=50) { // sparse sampling
+            const abs = Math.abs(pcmData[i]);
+            if(abs > peakAmp) peakAmp = abs;
+        }
+        
+        // Safety check for silence
+        if(peakAmp < 0.001) {
+             renderSequenceStrip([]); 
+             return;
+        }
+
+        // 2. Define Adaptive Threshold
+        // Any chunk quieter than 10% of the peak is considered "silence"
+        const adaptiveSilenceThresh = peakAmp * 0.1;
+
+        const chunkDuration = 0.20; // 200ms resolution
         const chunkSize = Math.floor(sampleRate * chunkDuration);
         const totalChunks = Math.floor(pcmData.length / chunkSize);
         
         let rawIds = [];
-        let uniqueSignatures = []; // Array of "Pitch Signatures"
-        
-        // Analysis Settings
-        const silenceThresh = 0.02; // Very low threshold to detect quiet chords
+        let uniqueSignatures = [];
         
         for(let i=0; i<totalChunks; i++) {
             const start = i * chunkSize;
             const end = start + chunkSize;
             const slice = pcmData.slice(start, end);
             
-            // A. Check Volume (RMS)
+            // Calculate RMS
             let sum = 0;
             for(let j=0; j<slice.length; j++) sum += slice[j]*slice[j];
             const rms = Math.sqrt(sum/slice.length);
 
-            if(rms < silenceThresh) {
-                rawIds.push(0); // 0 = Silence
+            if(rms < adaptiveSilenceThresh) {
+                rawIds.push(0); // Silence
                 continue;
             }
 
-            // B. Zero Crossing Rate (Proxy for Pitch)
-            // We use a simplified ZCR to create a "Signature"
+            // Calculate Zero Crossing Rate (ZCR)
             let zcr = 0;
             for(let j=1; j<slice.length; j++) {
                 if((slice[j-1] > 0 && slice[j] < 0) || (slice[j-1] < 0 && slice[j] > 0)) zcr++;
             }
             
-            // Normalize ZCR relative to sample rate
-            // This roughly correlates to frequency
-            const signature = zcr; 
+            // Normalize ZCR by Chunk Length to get density
+            const signature = zcr / slice.length; 
 
-            // C. Fuzzy Matching
-            // Is this signature close to an existing one?
+            // Matching Logic
             let matchId = -1;
-            // Tolerance: Allow ~10% variation (vibrato/imperfect playing)
-            const tolerance = signature * 0.15; 
+            // 20% tolerance for pitch variations/vibrato
+            const tolerance = signature * 0.20; 
 
             for(let k=0; k<uniqueSignatures.length; k++) {
                 if(Math.abs(uniqueSignatures[k] - signature) < tolerance) {
-                    matchId = k + 1; // IDs start at 1
+                    matchId = k + 1;
                     break;
                 }
             }
 
             if(matchId === -1) {
-                // New Unique Sound Found
                 uniqueSignatures.push(signature);
                 matchId = uniqueSignatures.length;
             }
-            
             rawIds.push(matchId);
         }
 
-        // 2. Post-Process: Merge adjacent blocks & remove glitches
+        // 3. Condense Sequence (Merge neighbors)
         sequenceData = [];
-        if(rawIds.length === 0) return;
+        if(rawIds.length === 0) {
+             renderSequenceStrip();
+             return;
+        }
 
         let currentId = rawIds[0];
         let startTime = 0;
 
         for(let i=1; i<rawIds.length; i++) {
             if(rawIds[i] !== currentId) {
-                // If block is too short (< 2 chunks = 0.5s), ignore it (denoising) unless it's the only one
-                // Simple logic: just push for now to see feedback
                 sequenceData.push({
                     id: currentId,
                     start: startTime * chunkDuration,
@@ -522,7 +529,6 @@
                 startTime = i;
             }
         }
-        // Push last
         sequenceData.push({
             id: currentId,
             start: startTime * chunkDuration,
@@ -534,26 +540,34 @@
 
     function renderSequenceStrip() {
         seqStrip.innerHTML = '';
+        
+        // Filter out silence blocks (ID 0) for display? 
+        // Or keep them as gaps. Let's keep them as gaps (transparent)
+        
         const totalDuration = loopBuffer.duration;
         let hasContent = false;
 
         sequenceData.forEach(block => {
-            // Ignore silence blocks (ID 0)
-            if(block.id === 0) return;
+            if(block.id === 0) return; // Skip rendering silence blocks
             
             hasContent = true;
             const el = document.createElement('div');
             el.className = 'seq-block';
             
-            // Inner Content
             el.innerHTML = `<span class="seq-num">${block.id}</span>`;
             
-            // Width
             const dur = block.end - block.start;
             const pct = (dur / totalDuration) * 100;
+            
+            // Positioning absolute might be better if we skip silence, 
+            // but flexbox with gaps is easier.
+            // Since we skipped ID 0, flexbox proportions break.
+            // Let's use absolute positioning relative to container for accuracy
+            
+            el.style.position = 'absolute';
+            el.style.left = ((block.start / totalDuration) * 100) + "%";
             el.style.width = pct + "%";
             
-            // Data for Playhead
             el.dataset.start = block.start;
             el.dataset.end = block.end;
             
@@ -561,7 +575,7 @@
         });
 
         if(!hasContent) {
-            seqStrip.innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#666;">No Tonal Content Detected</div>';
+            seqStrip.innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#666;">No Tonal Content</div>';
         }
     }
 
@@ -665,16 +679,13 @@
         const totalDur = loopBuffer.duration;
         const currentTotalTime = audioCtx.currentTime - playbackStartTime;
         const loopDuration = loopEnd - loopStart;
-        // Position within loop (absolute time relative to buffer start)
         const pos = loopStart + (currentTotalTime % loopDuration);
 
-        // Highlight blocks
         const blocks = document.querySelectorAll('.seq-block');
         blocks.forEach(b => {
             const start = parseFloat(b.dataset.start);
             const end = parseFloat(b.dataset.end);
             
-            // Check intersection with playhead
             if(pos >= start && pos < end) {
                 b.classList.add('is-active');
             } else {
